@@ -2,13 +2,16 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>私の目に留まった記事 — ロボット・自動運転・AIモデルの最新情報18本 | Life is beautiful 学びの場</title>
-<link rel="stylesheet" href="../assets/style.css"></head><body><div class="wrap">
-<header class="site"><a class="home" href="../index.html">← トップへ</a>
-<div class="meta">2026年11月17日号｜ロボット / 自動運転・ロボット</div>
+<link rel="stylesheet" href="../assets/style.css"></head><body>
+<div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><span class="topbar-title">Life is beautiful 学びの場</span><a class="topbar-home" href="../index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in"><a href="../index.html">トップ</a><a href="../unread.html">未読リスト</a><a href="../deliveries.html">配信ごと</a><a href="../issues.html">号ごと</a><a href="../genres.html">ジャンル</a><a href="../glossary.html">用語集</a><a href="../later.html">後で読む</a><a href="../checked.html">チェック済み要点</a></div></nav></div><div class="wrap">
+<header class="site">
+<div class="meta">2026年11月17日号｜ロボット / 自動運転・ロボット｜ジャンル: テクノロジー・AI</div>
 <h1>私の目に留まった記事 — ロボット・自動運転・AIモデルの最新情報18本</h1>
-<div><span class="badge">未配信</span><span class="badge read" data-read-badge style="display:none">既読</span></div></header>
+<div><span class="badge">未配信</span><span class="badge read" data-read-badge style="display:none">既読</span></div>
+</header>
 <h2>概要</h2><p>Tesla FSDの暴走車回避、Inkling 2 Small、Cybertruck生産終了とCybercab集中、Zooxのロボタクシー、Starship 14回目試験、Claude Meetingsなど、ロボット・自動運転・半導体・AIモデル・核融合まで今週の動きを拾い読みする18本。</p>
-<h2>要点</h2><ul class="points"><li>Tesla FSDの暴走車回避、Inkling 2 Small、Cybertruck生産終了とCybercab集中など18本</li><li>Zooxの前後なしロボタクシー、Starship 14回目試験の判断、Claude Meetingsなど</li><li>ロボット・自動運転・半導体・AIモデル・核融合まで今週の動きを拾い読み</li></ul>
+<p class="meta">AI評価は配信時に付けます。</p>
+<h2>要点（気になったらチェック）</h2><div class="points"><label class="point"><input type="checkbox" data-check="12:0"><span>Tesla FSDの暴走車回避、Inkling 2 Small、Cybertruck生産終了とCybercab集中など18本</span></label><label class="point"><input type="checkbox" data-check="12:1"><span>Zooxの前後なしロボタクシー、Starship 14回目試験の判断、Claude Meetingsなど</span></label><label class="point"><input type="checkbox" data-check="12:2"><span>ロボット・自動運転・半導体・AIモデル・核融合まで今週の動きを拾い読み</span></label></div>
 <h2>用語解説</h2><dl class="gloss"><dt>FSD</dt><dd>Teslaの自動運転機能（Full Self-Driving）。カメラとニューラルネットで運転を担う</dd><dt>MoE</dt><dd>複数の専門家モデルを組み合わせ、入力に応じて必要な部分だけを動かす仕組み</dd><dt>オープン・ウェイト</dt><dd>AIモデルの重み（学習結果の数値）が公開され、誰でもダウンロードして自分の環境で使える形のこと</dd><dt>スロップ</dt><dd>AIが量産した低品質な文章や画像などのコンテンツを指す言葉</dd></dl>
 <h2>関連テーマ</h2><ul class="points"><li><a href="11.html">AIで燃え尽きるエンジニアたち</a> <span class="meta">（2026年11月17日号）</span></li><li><a href="13.html">質問コーナー — 読者相談6問</a> <span class="meta">（2026年11月17日号）</span></li></ul>
 <p><a href="https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43" target="_blank" rel="noopener">Notionで原文の記録を読む</a></p>
@@ -17,13 +20,13 @@
 <footer>週刊 Life is beautiful 学びの場</footer>
 <script src="../assets/app.js"></script>
 <script>
-const ORDER=[6, 7, 8, 1, 2, 3, 4, 5, 9, 10, 15, 16, 11, 17, 18, 19];
+const ORDER=[6, 7, 8, 1, 2, 3, 4, 5, 9, 10, 15, 16, 11, 17, 18, 19, 20, 21];
 const CUR=12;
 if(getRead().includes(CUR)){document.querySelector('[data-read-badge]').style.display='inline-block';}
 document.getElementById('nextBtn').addEventListener('click',()=>{
   markRead(CUR);
-  const read=getRead();
-  const next=ORDER.find(id=>!read.includes(id));
+  const read=getRead();const skip=getSkip();
+  const next=ORDER.find(id=>!read.includes(id)&&!skip.includes(id));
   location.href = next ? next+'.html' : '../index.html';
 });
 document.getElementById('unreadLink').addEventListener('click',e=>{e.preventDefault();unmarkRead(CUR);document.querySelector('[data-read-badge]').style.display='none';});
