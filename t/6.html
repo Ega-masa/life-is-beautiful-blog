@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SpaceX Starship本体キャッチ成功 — 宇宙に浮かぶAIデータセンターへ | Life is beautiful 学びの場</title>
+<link rel="stylesheet" href="../assets/style.css"></head><body><div class="wrap">
+<header class="site"><a class="home" href="../index.html">← トップへ</a>
+<div class="meta">2026年11月17日号｜テクノロジー / SpaceX</div>
+<h1>SpaceX Starship本体キャッチ成功 — 宇宙に浮かぶAIデータセンターへ</h1>
+<div><span class="badge">2026年11月21日の配信分</span><span class="badge read" data-read-badge style="display:none">既読</span></div></header>
+<h2>概要</h2><p>Starship本体を発射タワーのアームで空中キャッチすることに初めて成功。ブースターに続き本体も再利用できるようになり、宇宙に浮かぶAIデータセンター構想の現実性が高まった。</p>
+<h2>要点</h2><ul class="points"><li>Starship本体を発射タワーのアームで空中キャッチすることに初めて成功</li><li>ブースターに続き本体も再利用でき、打ち上げコストがさらに下がる見込み</li><li>宇宙に浮かぶAIデータセンター構想の現実性が高まった</li></ul>
+<h2>用語解説</h2><dl class="gloss"><dt>ブースター</dt><dd>（定義は用語集ページ参照）</dd><dt>Starship</dt><dd>（定義は用語集ページ参照）</dd><dt>AIデータセンター</dt><dd>（定義は用語集ページ参照）</dd></dl>
+<details class="fulltext"><summary>全文はこちら（318字）</summary><div class="ft"><h4>SpaceX Starship</h4>
+<p>SpaceXが、Starship本体を発射タワーのアームで空中キャッチすることに成功しました。SpaceXはこれまで、ブースターロケットの回収には何度も成功していますが、本体のStarshipの回収に成功したのは今回が初めてです。なお、今回はブースターのキャッチは自動で中止され、メキシコ湾に落下しました。SpaceXは、ブースターロケットの再利用により、従来よりも大幅に打ち上げコストを下げましたが、Starship本体の再利用により、さらに打ち上げコストを下げることが可能になります。</p>
+<p>これで「夢物語」と批判されてきた、宇宙に浮かぶAIデータセンターの現実性が大きく高まったことになります。</p></div></details>
+<h2>関連テーマ</h2><ul class="points"><li><a href="3.html">SpaceXの「上場祭り」 — ファンド経由で未上場株に乗る方法</a> <span class="meta">（2026年6月2日号）</span></li><li><a href="7.html">ジェンセン・フアンCEOの辞任 — NVIDIAの行方</a> <span class="meta">（2026年11月17日号）</span></li></ul>
+<p><a href="https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43" target="_blank" rel="noopener">Notionで原文の記録を読む</a></p>
+<button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
+<p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
+<footer>週刊 Life is beautiful 学びの場</footer>
+<script src="../assets/app.js"></script>
+<script>
+const ORDER=[6, 7, 8, 1, 2, 3, 4, 5, 9, 10, 15, 16, 11, 17, 18, 19];
+const CUR=6;
+if(getRead().includes(CUR)){document.querySelector('[data-read-badge]').style.display='inline-block';}
+document.getElementById('nextBtn').addEventListener('click',()=>{
+  markRead(CUR);
+  const read=getRead();
+  const next=ORDER.find(id=>!read.includes(id));
+  location.href = next ? next+'.html' : '../index.html';
+});
+document.getElementById('unreadLink').addEventListener('click',e=>{e.preventDefault();unmarkRead(CUR);document.querySelector('[data-read-badge]').style.display='none';});
+</script></div></body></html>
