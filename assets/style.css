@@ -1,5 +1,5 @@
-:root{--ink:#1c2733;--sub:#5a6a7a;--line:#dde4ea;--bg:#f6f8fa;--card:#fff;--accent:#1a5fb4;--badge:#e8f0fa;--read:#8a97a5}
-@media (prefers-color-scheme:dark){:root{--ink:#e8edf2;--sub:#9fb0c0;--line:#33404d;--bg:#141a20;--card:#1e262f;--accent:#6aa6e8;--badge:#26374a;--read:#66727e}}
+:root{--ink:#1c2733;--sub:#5a6a7a;--line:#dde4ea;--bg:#f6f8fa;--card:#fff;--accent:#1a5fb4;--badge:#e8f0fa;--read:#8a97a5;--newbg:#e7f6ec;--newink:#137333;--newline:#bfe6cc}
+@media (prefers-color-scheme:dark){:root{--ink:#e8edf2;--sub:#9fb0c0;--line:#33404d;--bg:#141a20;--card:#1e262f;--accent:#6aa6e8;--badge:#26374a;--read:#66727e;--newbg:#1d3a28;--newink:#7fd79a;--newline:#2c5a3c}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;line-height:1.75;font-size:16px}
 .wrap{max-width:760px;margin:0 auto;padding:16px 14px 48px}
@@ -13,6 +13,8 @@ h3{font-size:16px;margin:20px 0 6px}
 .meta{color:var(--sub);font-size:13px}
 .badge{display:inline-block;background:var(--badge);color:var(--accent);border-radius:999px;padding:1px 10px;font-size:12px;margin:2px 4px 2px 0}
 .badge.read{background:transparent;border:1px solid var(--line);color:var(--read)}
+.badge.score{background:var(--accent);color:#fff;font-weight:700}
+.badge.newb{background:var(--newbg);color:var(--newink);border:1px solid var(--newline);font-weight:700}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
 .card.big{border:2px solid var(--accent);padding:18px}
 .card .ttl{font-weight:700;font-size:17px;line-height:1.5}
@@ -37,3 +39,27 @@ button.next:active{opacity:.85}
 .navrow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 .navrow a{flex:1;min-width:140px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px}
 footer{color:var(--sub);font-size:12px;margin-top:36px;text-align:center}
+.stickyhead{position:sticky;top:0;z-index:60;background:var(--card);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 14px}
+.burger{background:var(--badge);border:1px solid var(--line);border-radius:8px;font-size:17px;line-height:1;padding:7px 11px;cursor:pointer;color:var(--ink)}
+.topbar-title{font-weight:700;font-size:14px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-home{font-size:13px;font-weight:700;white-space:nowrap}
+.menu-in{max-width:760px;margin:0 auto;padding:4px 14px 10px;display:flex;flex-wrap:wrap;gap:6px}
+.menu-in a{flex:1 1 40%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;text-align:center;color:var(--ink)}
+.rowbtns{display:inline-flex;gap:6px;margin:4px 0 0 0;vertical-align:middle}
+button.mini{background:var(--card);border:1.5px solid var(--accent);color:var(--accent);border-radius:999px;padding:4px 13px;font-size:12.5px;font-weight:700;cursor:pointer}
+button.mini.on{background:var(--accent);color:#fff}
+button.mini.skipb{border-color:var(--sub);color:var(--sub)}
+button.mini.skipb.on{background:var(--sub);color:#fff}
+.rowbtns.big{display:flex;margin:12px 0 4px}
+.rowbtns.big button.mini{font-size:14.5px;padding:9px 20px}
+.eval{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:14px 0}
+.eval-head{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:15px}
+.eval-total{font-size:23px;color:var(--accent)}
+.eval-total small{font-size:13px;color:var(--sub)}
+.eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:8px 0;font-size:14px}
+.eval-grid b{color:var(--accent)}
+.eval-comment{font-size:14px;margin:6px 0 0}
+.points label.point{display:flex;gap:9px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin:7px 0;cursor:pointer}
+.points label.point input{margin-top:6px;width:17px;height:17px;flex:none;accent-color:var(--accent)}
+.points label.point input:checked+span{font-weight:700}
