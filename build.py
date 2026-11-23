@@ -23,6 +23,9 @@ later.html / checked.html を生成する。
   「いらない」はトップの続き計算と未読リストから除外される。
 - テーマページの用語解説は、用語集へ誘導せず定義文をその場に全文表示する
   （定義が無い項目は、他テーマで定義済みの用語から補完する）。
+- テーマページの末尾には、その号の配信状況を「配信済みユニット数／全ユニット数」
+  の分数で表示する。全体数（分母）は themes.json の issues[].unit_total に保持し、
+  分子は themes の delivered 件数から自動計算する。unit_total が無い号では表示しない。
 - 今後の配信ジョブは、themes.json を更新してから `python3 build.py` を
   再実行すればサイト全体が再生成される。
 
@@ -284,6 +287,10 @@ def main():
     themes = data["themes"]
     by_id = {t["id"]: t for t in themes}
 
+    # 号ごとの全ユニット数（分母）。issues[].unit_total に保持する。
+    issue_totals = {i["issue_date"]: i["unit_total"]
+                    for i in data.get("issues", []) if i.get("unit_total")}
+
     # 配信順（古い順）: delivered_at → id
     delivered = [t for t in themes if t.get("delivered")]
     delivered.sort(key=lambda t: (t.get("delivered_at") or "9999", t["id"]))
@@ -326,7 +333,7 @@ def main():
 
     OUT_T.mkdir(parents=True, exist_ok=True)
     for t in themes:
-        (OUT_T / f"{t['id']}.html").write_text(theme_page(t, by_id, issues, reading_order, slide_of, global_defs), encoding="utf-8")
+        (OUT_T / f"{t['id']}.html").write_text(theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_totals), encoding="utf-8")
     (BASE / "index.html").write_text(index_page(delivered, reading_order), encoding="utf-8")
     (BASE / "unread.html").write_text(unread_page(delivered, reading_order), encoding="utf-8")
     (BASE / "deliveries.html").write_text(deliveries_page(delivered), encoding="utf-8")
@@ -340,7 +347,7 @@ def main():
     (BASE / "checked.html").write_text(checked_page(delivered), encoding="utf-8")
     print(f"built: index + unread + {len(themes)} theme pages + glossary + deliveries + issues + genres + {len(GENRES)} genre pages + later + checked; slides mapped: {sorted(slide_of)}")
 
-def theme_page(t, by_id, issues, reading_order, slide_of, global_defs):
+def theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_totals):
     tid = t["id"]
     title = t["title"] or ""
     parts = []
@@ -397,6 +404,11 @@ def theme_page(t, by_id, issues, reading_order, slide_of, global_defs):
         parts.append(f'<h2>関連テーマ</h2><ul class="points">{lis}</ul>')
     if t.get("notion_url"):
         parts.append(f'<p><a href="{esc(t["notion_url"])}" target="_blank" rel="noopener">Notionで原文の記録を読む</a></p>')
+    # 記事の最後に、その号の配信状況を分数で表示する（分子は delivered 件数から自動計算）
+    total_units = issue_totals.get(t["issue_date"])
+    if total_units:
+        done_units = sum(1 for s in issues.get(t["issue_date"], []) if s.get("delivered"))
+        parts.append(f'<p class="note" style="text-align:center">{esc(issue_label(t["issue_date"]))}の配信状況： {done_units}/{total_units}</p>')
     parts.append(f"""<button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
 <p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
 <footer>週刊 Life is beautiful 学びの場</footer>

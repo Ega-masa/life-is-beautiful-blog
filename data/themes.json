@@ -6,7 +6,8 @@
    "issue_date": "2026-06-02",
    "status": "recorded",
    "subject": null,
-   "theme_count": 5
+   "theme_count": 5,
+   "unit_total": 5
   },
   {
    "delivered_count": 4,
@@ -14,7 +15,8 @@
    "issue_date": "2026-06-09",
    "status": "recorded",
    "subject": null,
-   "theme_count": 4
+   "theme_count": 4,
+   "unit_total": 5
   },
   {
    "delivered_count": 0,
@@ -174,7 +176,8 @@
    "issue_date": "2026-11-17",
    "status": "delivering",
    "subject": "ジェンセン・フアンCEOの辞任、ハワイの入国審査、ムーアの法則とAIバブル、AIが解いた量子コンピュータの予想",
-   "theme_count": 11
+   "theme_count": 11,
+   "unit_total": 15
   }
  ],
  "pending_theme_id": null,
@@ -1083,7 +1086,7 @@
    "notion_url": "https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43",
    "re_summary": null,
    "summary": "TeslaのFSDが暴走車を回避した映像、Cybertruck生産終了とCybercabへの集中、Zooxの前後なしロボタクシー。自動運転の現場が「人を超える運転」と「車の形そのものの変化」に入った3本。",
-   "title": "記事グループA：自動運転・ロボタクシー（FSD暴走車回避／Cybertruck生産終了・Cybercab／Zoox前後なし）",
+   "title": "記事グループA：自動運転・ロボタクシー",
    "genre": "テクノロジー・AI",
    "has_new": true,
    "evaluation": {
@@ -1151,7 +1154,7 @@
    "notion_url": "https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43",
    "re_summary": "オープンなAIモデルは「性能の競争」から「価値観や安全性の透明性の競争」へ、半導体は「速さの競争」から「用途に合わせた作り分け」へ移っている。どちらも「誰でも手元で使える」方向へ進んでおり、その分、使う側の見極めが大事になっている。",
    "summary": "Thinking Machines LabのInkling 2 Small、Nous ResearchのArete-27B、音声AIのVoiceStudio、GoogleのTPU 8tx／8i Max。オープンなAIモデルと手元で動くAIが一気に進んだ4本。",
-   "title": "記事グループB：AIモデルとオープン化（Inkling 2 Small／Arete-27B／VoiceStudio／TPU 8tx・8i Max）",
+   "title": "記事グループB：AIモデルとオープン化",
    "genre": "テクノロジー・AI",
    "has_new": true,
    "evaluation": {
@@ -1215,7 +1218,7 @@
    "notion_url": "https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43",
    "re_summary": "AI産業は「モデルを作る競争」から「資金・電力・戦略の構造の競争」へ移っている。誰が資金を回し、誰が電力を確保し、誰が戦う場所を絞るか——その構造を見れば、ニュースの裏側が見えてくる。",
    "summary": "AnthropicのAmodei CEOが語る「スロップ」発言、AIによるAI研究の加速、BloombergのフアンCEO論考、中国のAIデータセンター建設ラッシュ。AI産業の「構造」が見えてきた4本。",
-   "title": "記事グループC：AI産業の構造と競争（Amodei「スロップ」／AIがAI研究を加速／Bloomberg フアンCEO／中国AIデータセンター）",
+   "title": "記事グループC：AI産業の構造と競争",
    "genre": "テクノロジー・AI",
    "has_new": true,
    "evaluation": {
