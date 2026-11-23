@@ -16,7 +16,7 @@
    "status": "recorded",
    "subject": null,
    "theme_count": 4,
-   "unit_total": 5
+   "unit_total": 13
   },
   {
    "delivered_count": 0,
@@ -177,7 +177,7 @@
    "status": "delivering",
    "subject": "ジェンセン・フアンCEOの辞任、ハワイの入国審査、ムーアの法則とAIバブル、AIが解いた量子コンピュータの予想",
    "theme_count": 11,
-   "unit_total": 15
+   "unit_total": 23
   }
  ],
  "pending_theme_id": null,
