@@ -4,7 +4,12 @@
 Life is beautiful 学びの場 — 静的サイト生成スクリプト
 
 data/themes.json（学習スペース getlibrary の出力が正本）から、
-index.html / t/<theme_id>.html / glossary.html を生成する。
+index.html / t/<theme_id>.html / glossary.html / deliveries.html /
+issues.html を生成する。
+トップページは「続きはここから＋未読リスト＋各一覧への導線」に絞り、
+配信ごとの一覧は deliveries.html、号ごとの一覧は issues.html に分離する。
+テーマページの用語解説は、用語集へ誘導せず定義文をその場に全文表示する
+（定義が無い項目は、他テーマで定義済みの用語から補完する）。
 今後の配信ジョブは、themes.json を更新してから `python3 build.py` を
 再実行すればサイト全体が再生成される。
 
@@ -159,12 +164,21 @@ def main():
         else:
             print(f"WARN: slide source missing for theme {tid}: {src}")
 
+    # 用語の定義を全テーマから集めた対応表（テーマページで定義が欠けた項目の補完用）
+    global_defs = {}
+    for t in themes:
+        for g in (t.get("glossary") or []):
+            if g.get("term") and g.get("definition"):
+                global_defs.setdefault(g["term"], g["definition"])
+
     OUT_T.mkdir(parents=True, exist_ok=True)
     for t in themes:
-        (OUT_T / f"{t['id']}.html").write_text(theme_page(t, by_id, issues, reading_order, slide_of), encoding="utf-8")
-    (BASE / "index.html").write_text(index_page(delivered, issues, reading_order, by_id), encoding="utf-8")
+        (OUT_T / f"{t['id']}.html").write_text(theme_page(t, by_id, issues, reading_order, slide_of, global_defs), encoding="utf-8")
+    (BASE / "index.html").write_text(index_page(delivered, reading_order), encoding="utf-8")
+    (BASE / "deliveries.html").write_text(deliveries_page(delivered), encoding="utf-8")
+    (BASE / "issues.html").write_text(issues_page(issues), encoding="utf-8")
     (BASE / "glossary.html").write_text(glossary_page(themes), encoding="utf-8")
-    print(f"built: index + {len(themes)} theme pages + glossary; slides mapped: {sorted(slide_of)}")
+    print(f"built: index + {len(themes)} theme pages + glossary + deliveries + issues; slides mapped: {sorted(slide_of)}")
 
 def theme_link(t, prefix="t/"):
     return f'{prefix}{t["id"]}.html'
@@ -177,7 +191,7 @@ def badges(t, extra=""):
         b += '<span class="badge">未配信</span>'
     return b + extra
 
-def theme_page(t, by_id, issues, reading_order, slide_of):
+def theme_page(t, by_id, issues, reading_order, slide_of, global_defs):
     tid = t["id"]
     title = t["title"] or ""
     parts = []
@@ -199,8 +213,10 @@ def theme_page(t, by_id, issues, reading_order, slide_of):
         parts.append(f'<h2>要点</h2><ul class="points">{lis}</ul>')
     gloss = [g for g in (t.get("glossary") or []) if g.get("term")]
     if gloss:
+        # 用語解説は定義文をその場に全文表示する（用語集ページへの参照で済ませない）。
+        # そのテーマに定義が無い項目は、他テーマで定義済みの用語から補完する。
         items = "".join(
-            f'<dt>{esc(g["term"])}</dt><dd>{esc(g["definition"])}</dd>' if g.get("definition") else f'<dt>{esc(g["term"])}</dt><dd>（定義は用語集ページ参照）</dd>'
+            f'<dt>{esc(g["term"])}</dt><dd>{esc(g.get("definition") or global_defs.get(g["term"], ""))}</dd>'
             for g in gloss)
         parts.append(f'<h2>用語解説</h2><dl class="gloss">{items}</dl>')
     if t.get("re_summary"):
@@ -243,7 +259,9 @@ document.getElementById('unreadLink').addEventListener('click',e=>{{e.preventDef
 </script></div></body></html>""")
     return "\n".join(parts)
 
-def index_page(delivered, issues, reading_order, by_id):
+def index_page(delivered, reading_order):
+    # トップは「続きを読む」に集中させる。配信ごと・号ごとの全一覧は
+    # deliveries.html / issues.html へ分離し、ここには導線だけを置く。
     info = {t["id"]: {"title": t["title"] or "", "issue": issue_label(t["issue_date"]), "label": t.get("delivery_label") or ""} for t in delivered}
     parts = ["""<!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
@@ -257,24 +275,14 @@ def index_page(delivered, issues, reading_order, by_id):
 <h2>未読リスト（古い順）</h2>
 <ul class="list" id="unreadList">"""]
     for t in delivered:
-        parts.append(f'<li data-tid="{t["id"]}"><a class="ttl" href="{theme_link(t)}">{esc(t["title"] or "")}</a><br>{badges(t)}<span class="meta">{esc(issue_label(t["issue_date"]))}</span> <span class="badge read" data-read-badge style="display:none">既読</span></li>')
+        parts.append(f'<li data-tid="{t["id"]}"><a class="ttl" href="{theme_link(t)}">{esc(t["title"] or "")}</a><br>{badges(t)}<span class="badge read" data-read-badge style="display:none">既読</span></li>')
     parts.append('</ul>')
-    # 配信ごと（ラベル単位、古い順）
-    groups = {}
-    for t in delivered:
-        groups.setdefault(t.get("delivery_label") or "配信日時は未記録", []).append(t)
-    parts.append('<h2>配信ごと</h2>')
-    for label, ts in groups.items():
-        lis = "".join(f'<li data-tid="{t["id"]}"><a class="ttl" href="{theme_link(t)}">{esc(t["title"] or "")}</a> <span class="meta">（{esc(issue_label(t["issue_date"]))}）</span></li>' for t in ts)
-        parts.append(f'<div class="card"><div class="ttl">{esc(label)}</div><ul class="points">{lis}</ul></div>')
-    # 号ごと
-    parts.append('<h2>号ごと</h2>')
-    for date in sorted(issues):
-        ts = issues[date]
-        lis = "".join(f'<li data-tid="{t["id"]}"><a class="ttl" href="{theme_link(t)}">{esc(t["title"] or "")}</a>{"" if t.get("delivered") else " <span class=\"badge\">未配信</span>"}</li>' for t in ts)
-        parts.append(f'<div class="card"><div class="ttl">{esc(issue_label(date))}</div><ul class="points">{lis}</ul></div>')
-    parts.append(f"""<p style="margin-top:24px"><a href="glossary.html">用語集を見る →</a></p>
-<footer>週刊 Life is beautiful 学びの場</footer>
+    parts.append("""<div class="navrow">
+<a href="deliveries.html">配信ごとに見る</a>
+<a href="issues.html">号ごとに見る</a>
+<a href="glossary.html">用語集</a>
+</div>""")
+    parts.append(f"""<footer>週刊 Life is beautiful 学びの場</footer>
 <script src="assets/app.js"></script>
 <script>
 const ORDER={json.dumps(reading_order)};
@@ -293,6 +301,40 @@ if(next){{
   box.innerHTML='<div class="card big"><div class="ttl">全部読み終わっています ✓</div><p class="meta">次の配信をお待ちください</p></div>';
 }}
 </script></div></body></html>""")
+    return "\n".join(parts)
+
+def deliveries_page(delivered):
+    # 配信ごとの一覧（配信ラベル単位、古い順）。delivered は配信順に整列済み。
+    groups = {}
+    for t in delivered:
+        groups.setdefault(t.get("delivery_label") or "配信日時は未記録", []).append(t)
+    parts = ["""<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配信ごとに見る | Life is beautiful 学びの場</title>
+<link rel="stylesheet" href="assets/style.css"></head><body><div class="wrap">
+<header class="site"><a class="home" href="index.html">← トップへ</a><h1>配信ごとに見る</h1>
+<p class="meta">配信1回分ずつ、その回に届いたテーマを古い順に並べています。</p></header>"""]
+    for label, ts in groups.items():
+        lis = "".join(f'<li><a class="ttl" href="{theme_link(t)}">{esc(t["title"] or "")}</a> <span class="meta">（{esc(issue_label(t["issue_date"]))}）</span></li>' for t in ts)
+        parts.append(f'<div class="card"><div class="ttl">{esc(label)}</div><ul class="points">{lis}</ul></div>')
+    parts.append('<footer>週刊 Life is beautiful 学びの場</footer></div></body></html>')
+    return "\n".join(parts)
+
+def issues_page(issues):
+    # 号ごとの一覧（号の日付順、号内はテーマ順）。
+    parts = ["""<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>号ごとに見る | Life is beautiful 学びの場</title>
+<link rel="stylesheet" href="assets/style.css"></head><body><div class="wrap">
+<header class="site"><a class="home" href="index.html">← トップへ</a><h1>号ごとに見る</h1>
+<p class="meta">号ごとに、その号のテーマを並べています。</p></header>"""]
+    for date in sorted(issues):
+        ts = issues[date]
+        lis = "".join(f'<li><a class="ttl" href="{theme_link(t)}">{esc(t["title"] or "")}</a>{"" if t.get("delivered") else " <span class=\"badge\">未配信</span>"}</li>' for t in ts)
+        parts.append(f'<div class="card"><div class="ttl">{esc(issue_label(date))}</div><ul class="points">{lis}</ul></div>')
+    parts.append('<footer>週刊 Life is beautiful 学びの場</footer></div></body></html>')
     return "\n".join(parts)
 
 def glossary_page(themes):
