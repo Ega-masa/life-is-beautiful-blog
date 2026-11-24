@@ -29,6 +29,12 @@ later.html / memo.html を生成する。
 - テーマページの末尾には、その号の配信状況を「配信済みユニット数／全ユニット数」
   の分数で表示する。全体数（分母）は themes.json の issues[].unit_total に保持し、
   分子は themes の delivered 件数から自動計算する。unit_total が無い号では表示しない。
+- 質問コーナーは専用レイアウト（2026-11-24 の主君の決定）: kind="qa" かつ
+  questions 配列を持つテーマは、号の全質問を1ページにまとめる。構成は
+  FAQアコーディオン型＋TL;DR型の組み合わせで、質問の目次（アンカーリンク）→
+  質問ごとに「Q. 質問の要約／A. 回答の要約／ポイント／質問と回答の全文
+  （details、初期状態は閉）」を並べる。旧来の個別質問テーマの URL は
+  REDIRECTS で Q&A ページの該当アンカーへ転送する（リンク切れ防止）。
 - 今後の配信ジョブは、themes.json を更新してから `python3 build.py` を
   再実行すればサイト全体が再生成される。
 
@@ -85,8 +91,9 @@ SLIDES = {
     16: "visuals_2026-06-09-pm/slide2.png",
     18: "visuals_2026-06-09-pm/slide3.png",
     19: "visuals_2026-06-09-pm/slide4.png",
-    22: "visuals_2026-06-09-pm/slide5.png",
-    23: "visuals_2026-06-09-pm/slide6.png",
+    # 6/9号 質問コーナー専用ページ（9問）: visuals_2026-06-09-pm/slide_qa.png
+    # （make_visuals_0609_qa.py）。旧 id22・23 の slide5/6.png は統合に伴い未使用。
+    24: "visuals_2026-06-09-pm/slide_qa.png",
     6: "visuals_2026-11-21-pm/slide_theme1.png",
     7: "visuals_2026-11-21-pm/slide_theme2.png",
     8: "visuals_2026-11-21-pm/slide_theme3.png",
@@ -96,6 +103,13 @@ SLIDES = {
     17: "visuals_2026-11-23-am/slide_1117_am_t7a.png",
     20: "visuals_2026-11-24-am/slide_1117_am_t7b.png",
     21: "visuals_2026-11-24-am/slide_1117_am_t7c.png",
+}
+
+# 旧URL -> Q&Aページのアンカーへの転送（統合で消えたテーマのリンク切れ防止）
+# 2026-11-24: 6/9号の個別質問テーマ id22・23 を Q&A テーマ id24 へ統合した。
+REDIRECTS = {
+    22: "24.html#q1",
+    23: "24.html#q2",
 }
 
 CSS = """
@@ -166,6 +180,12 @@ button.mini.skipb.on{background:var(--sub);color:#fff}
 .memo-item textarea{width:100%;min-height:90px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;font-family:inherit;resize:vertical;margin-top:8px}
 .memo-status{font-size:12.5px;color:var(--sub);margin-top:4px;min-height:1.4em}
 .memo-del{margin-top:2px}
+.qa-toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px 12px 36px;margin:12px 0}
+.qa-toc li{margin:7px 0}
+.qa-block{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px 12px;margin:14px 0}
+.qa-block h3{font-size:17px;margin:14px 0 8px;line-height:1.55}
+.qa-a{background:var(--badge);border-radius:10px;padding:10px 14px;margin:8px 0;font-size:15.5px}
+.qa-block h4{font-size:14.5px;margin:14px 0 4px;color:var(--accent)}
 """
 
 JS = """
@@ -351,7 +371,13 @@ def main():
 
     OUT_T.mkdir(parents=True, exist_ok=True)
     for t in themes:
-        (OUT_T / f"{t['id']}.html").write_text(theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_totals), encoding="utf-8")
+        if t.get("kind") == "qa" and t.get("questions"):
+            page = qa_theme_page(t, issues, reading_order, slide_of, global_defs, issue_totals)
+        else:
+            page = theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_totals)
+        (OUT_T / f"{t['id']}.html").write_text(page, encoding="utf-8")
+    for old_id, target in REDIRECTS.items():
+        (OUT_T / f"{old_id}.html").write_text(redirect_page(old_id, target), encoding="utf-8")
     (BASE / "index.html").write_text(index_page(delivered, reading_order), encoding="utf-8")
     (BASE / "unread.html").write_text(unread_page(delivered, reading_order), encoding="utf-8")
     (BASE / "deliveries.html").write_text(deliveries_page(delivered), encoding="utf-8")
@@ -364,6 +390,18 @@ def main():
     (BASE / "later.html").write_text(later_page(delivered, reading_order), encoding="utf-8")
     (BASE / "memo.html").write_text(memo_page(delivered), encoding="utf-8")
     print(f"built: index + unread + {len(themes)} theme pages + glossary + deliveries + issues + genres + {len(GENRES)} genre pages + later + memo; slides mapped: {sorted(slide_of)}")
+
+def eval_html(t):
+    """AI評価パネル（通常テーマと Q&A テーマで共用）"""
+    ev = t.get("evaluation")
+    if ev:
+        return f"""<div class="eval"><div class="eval-head"><span>AI評価</span><span class="eval-total">{ev['total']}<small> / 100点</small></span></div>
+<div class="eval-grid"><div>新規性 <b>{ev['novelty']}</b> / 25</div><div>面白さ <b>{ev['interest']}</b> / 25</div><div>話題性 <b>{ev['buzz']}</b> / 25</div><div>関連度 <b>{ev['relevance']}</b> / 25</div></div>
+<p class="eval-comment">{esc(ev.get('comment') or '')}</p>
+<p class="meta">話題性は、題材がSNSや世の中のニュースでどれだけ注目されるかを目安にした推定です（個別のSNS調査はしていません）。関連度は、主君のNotion「ビジネス」欄のまとめ傾向（企業ケース・事業アイデア・投資・思考法）との合致度です。</p></div>"""
+    if not t.get("delivered"):
+        return '<p class="meta">AI評価は配信時に付けます。</p>'
+    return ""
 
 def theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_totals):
     tid = t["id"]
@@ -379,14 +417,7 @@ def theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_tot
         parts.append(f'<img class="slide" src="{slide_of[tid]}" alt="まとめスライド">')
     if t.get("summary"):
         parts.append(f'<h2>概要</h2><p>{esc(t["summary"])}</p>')
-    ev = t.get("evaluation")
-    if ev:
-        parts.append(f"""<div class="eval"><div class="eval-head"><span>AI評価</span><span class="eval-total">{ev['total']}<small> / 100点</small></span></div>
-<div class="eval-grid"><div>新規性 <b>{ev['novelty']}</b> / 25</div><div>面白さ <b>{ev['interest']}</b> / 25</div><div>話題性 <b>{ev['buzz']}</b> / 25</div><div>関連度 <b>{ev['relevance']}</b> / 25</div></div>
-<p class="eval-comment">{esc(ev.get('comment') or '')}</p>
-<p class="meta">話題性は、題材がSNSや世の中のニュースでどれだけ注目されるかを目安にした推定です（個別のSNS調査はしていません）。関連度は、主君のNotion「ビジネス」欄のまとめ傾向（企業ケース・事業アイデア・投資・思考法）との合致度です。</p></div>""")
-    elif not t.get("delivered"):
-        parts.append('<p class="meta">AI評価は配信時に付けます。</p>')
+    parts.append(eval_html(t))
     if t.get("key_points"):
         items = "".join(f'<li>{esc(k)}</li>' for k in t["key_points"])
         parts.append(f'<h2>要点</h2><ul class="points">{items}</ul>')
@@ -445,6 +476,88 @@ document.getElementById('nextBtn').addEventListener('click',()=>{{
 document.getElementById('unreadLink').addEventListener('click',e=>{{e.preventDefault();unmarkRead(CUR);document.querySelector('[data-read-badge]').style.display='none';}});
 </script></div></body></html>""")
     return "\n".join(parts)
+
+def qa_theme_page(t, issues, reading_order, slide_of, global_defs, issue_totals):
+    """質問コーナー専用レイアウト: 号の全質問を1ページにまとめる。
+    FAQアコーディオン型（目次＋タップで全文展開）と TL;DR＋キーポイント型
+    （答えの要約を先に、要点は箇条書き）の組み合わせ。"""
+    tid = t["id"]
+    title = t["title"] or ""
+    questions = t.get("questions") or []
+    parts = []
+    parts.append(head(f"{title} | Life is beautiful 学びの場", "../"))
+    parts.append(f"""<header class="site">
+<div class="meta">{esc(issue_label(t['issue_date']))}｜{esc(t.get('major_theme') or '')} / {esc(t.get('middle_theme') or '')}｜ジャンル: {esc(t.get('genre') or '')}</div>
+<h1>{esc(title)}</h1>
+<div>{badges(t)}<span class="badge read" data-read-badge style="display:none">既読</span></div>
+{toggle_btns(t, big=True)}</header>""")
+    if tid in slide_of:
+        parts.append(f'<img class="slide" src="{slide_of[tid]}" alt="まとめスライド">')
+    if t.get("summary"):
+        parts.append(f'<h2>概要</h2><p>{esc(t["summary"])}</p>')
+    toc = "".join(f'<li><a href="#q{i}">{esc(q.get("q_summary") or "")}</a></li>'
+                  for i, q in enumerate(questions, 1))
+    parts.append(f'<h2>質問の目次（全{len(questions)}問）</h2><ol class="qa-toc">{toc}</ol>')
+    for i, q in enumerate(questions, 1):
+        pts = "".join(f'<li>{esc(p)}</li>' for p in (q.get("points") or []))
+        parts.append(f"""<section class="qa-block" id="q{i}">
+<h3>Q{i}. {esc(q.get('q_summary') or '')}</h3>
+<p class="qa-a"><strong>A.</strong> {esc(q.get('a_summary') or '')}</p>
+<h4>ポイント</h4>
+<ul class="points">{pts}</ul>
+<details class="fulltext"><summary>質問と回答の全文</summary><div class="ft"><h4>【質問】</h4>{md_lite(q.get('full_q') or '')}<h4>《回答》</h4>{md_lite(q.get('full_a') or '')}</div></details>
+</section>""")
+    gloss = [g for g in (t.get("glossary") or []) if g.get("term")]
+    if gloss:
+        items = "".join(
+            f'<dt>{esc(g["term"])}</dt><dd>{esc(g.get("definition") or global_defs.get(g["term"], ""))}</dd>'
+            for g in gloss)
+        parts.append(f'<h2>用語解説</h2><dl class="gloss">{items}</dl>')
+    if t.get("re_summary"):
+        parts.append(f'<h2>まとめ直し</h2><p>{esc(t["re_summary"])}</p>')
+    if t.get("note"):
+        parts.append(f'<div class="note"><strong>補足：</strong>{esc(t["note"])}</div>')
+    if t.get("notion_url"):
+        parts.append(f'<p><a href="{esc(t["notion_url"])}" target="_blank" rel="noopener">Notionで原文の記録を読む</a></p>')
+    total_units = issue_totals.get(t["issue_date"])
+    if total_units:
+        done_units = sum(1 for s in issues.get(t["issue_date"], []) if s.get("delivered"))
+        parts.append(f'<p class="note" style="text-align:center">{esc(issue_label(t["issue_date"]))}の配信状況： {done_units}/{total_units}</p>')
+    parts.append(f"""<div class="memo-sec"><h2>メモ</h2>
+<textarea data-memo="{tid}" placeholder="気になったことや保存したいことを自由に書けます"></textarea>
+<div class="memo-status"></div></div>""")
+    parts.append(f"""<button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
+<p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
+{eval_html(t)}
+<footer>週刊 Life is beautiful 学びの場</footer>
+<script src="../assets/app.js"></script>
+<script>
+const ORDER={json.dumps(reading_order)};
+const CUR={tid};
+if(getRead().includes(CUR)){{document.querySelector('[data-read-badge]').style.display='inline-block';}}
+document.getElementById('nextBtn').addEventListener('click',()=>{{
+  markRead(CUR);
+  const read=getRead();const skip=getSkip();
+  const next=ORDER.find(id=>!read.includes(id)&&!skip.includes(id));
+  location.href = next ? next+'.html' : '../index.html';
+}});
+document.getElementById('unreadLink').addEventListener('click',e=>{{e.preventDefault();unmarkRead(CUR);document.querySelector('[data-read-badge]').style.display='none';}});
+</script></div></body></html>""")
+    return "\n".join(parts)
+
+def redirect_page(old_id, target):
+    """統合で消えた旧テーマURLを、Q&Aページの該当アンカーへ転送するページ"""
+    url = target
+    return f"""<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="0; url={esc(url)}">
+<link rel="canonical" href="{esc(url)}">
+<title>移動しました | Life is beautiful 学びの場</title>
+<link rel="stylesheet" href="../assets/style.css"></head><body>
+<div class="wrap">
+<p>このページは質問コーナー専用ページに統合されました。自動で移動しない場合は、<a href="{esc(url)}">こちら</a>を開いてください。</p>
+</div></body></html>"""
 
 def info_map(delivered):
     return {t["id"]: {"title": t["title"] or "", "issue": issue_label(t["issue_date"]), "label": t.get("delivery_label") or ""} for t in delivered}
