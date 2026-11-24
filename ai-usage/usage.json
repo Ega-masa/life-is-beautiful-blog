@@ -1,0 +1,35 @@
+{
+  "updated_at": "2026-11-24T13:52:34+09:00",
+  "muse": {
+    "status": "ok",
+    "weekly_used_pct": 100.0,
+    "weekly_remaining_pct": 0.0,
+    "reset_at_text": "Nov 27 at 12:35 PM JST",
+    "additional_used_pct": 1.0,
+    "additional_left_text": "3.9B",
+    "note": "Muse は割合と概数（例: 3.9B）しか提供しないため、正確な残トークン数は出せません"
+  },
+  "claude": {
+    "status": "stub",
+    "week_jpy": 196,
+    "total_jpy": 312,
+    "week_usd": 1.23,
+    "total_usd": 1.96,
+    "est_balance_jpy": null,
+    "est_balance_note": "推定残高には Console で確認した基準残高 (config: claude_baseline_usd) が必要です",
+    "source": "spend_cache.json",
+    "note": "使用額は ローカル集計キャッシュ ベース。残高は推定のみ（公式の残高APIなし）"
+  },
+  "xai": {
+    "status": "ok",
+    "balance_jpy": 6216,
+    "balance_usd": 39.08,
+    "week_jpy": 307,
+    "week_usd": 1.932736,
+    "note": "Management API の実残高（台帳ベース。当期使用額の反映が遅れる場合あり）"
+  },
+  "fx": {
+    "usd_jpy": 159.06171,
+    "source": "open.er-api.com"
+  }
+}
