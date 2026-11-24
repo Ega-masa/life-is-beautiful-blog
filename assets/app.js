@@ -199,3 +199,108 @@ document.addEventListener('DOMContentLoaded',function(){
   applyReadState();
   refreshPrefUI();
 });
+const SYNC_URL='https://lib-state-sync.mr-maksgh.workers.dev/state?k=a2bb07bbc1e0dd23bcf9a2589245773ff5eba301c675a986';
+const SYNC_ENABLED=SYNC_URL.indexOf('REPLACE-ME')<0;
+const SYNC_KEYS=['lib_read_v1','lib_pref_v1','lib_memo_v1','lib_sort_v1','lib_filter_v1'];
+const SYNC_META_KEY='lib_sync_v1';
+const SYNC_RELOAD_FLAG='lib_sync_reloaded_v1';
+const SYNC_DEBOUNCE_MS=800;
+const SYNC_TIMEOUT_MS=3000;
+function syncGetMeta(){
+  try{const m=JSON.parse(localStorage.getItem(SYNC_META_KEY));if(m&&typeof m.updated_at==='number')return{updated_at:m.updated_at,last_synced_at:(typeof m.last_synced_at==='number')?m.last_synced_at:0};}catch(e){}
+  return{updated_at:0,last_synced_at:0};
+}
+function syncSetMeta(m){
+  try{localStorage.setItem(SYNC_META_KEY,JSON.stringify({updated_at:m.updated_at||0,last_synced_at:m.last_synced_at||0}));}catch(e){}
+}
+function syncHasLocalState(store){
+  for(let i=0;i<SYNC_KEYS.length;i++){const v=store.getItem(SYNC_KEYS[i]);if(v!==null&&v!=='')return true;}
+  return false;
+}
+function syncBuildSnapshot(store,updatedAt){
+  const data={};
+  SYNC_KEYS.forEach(function(k){data[k]=store.getItem(k);});
+  return{updated_at:updatedAt,data:data};
+}
+function syncDecide(localUpdatedAt,cloudUpdatedAt,hasLocal){
+  if(cloudUpdatedAt>localUpdatedAt)return 'pull';
+  if(localUpdatedAt>cloudUpdatedAt)return hasLocal?'push':'pull';
+  if(cloudUpdatedAt===0)return hasLocal?'push':'none';
+  return 'none';
+}
+let syncApplying=false;
+let syncPushTimer=null;
+function syncSchedulePush(){
+  if(!SYNC_ENABLED)return;
+  if(syncPushTimer)clearTimeout(syncPushTimer);
+  syncPushTimer=setTimeout(function(){syncPushTimer=null;syncPushNow();},SYNC_DEBOUNCE_MS);
+}
+function syncOnLocalWrite(){
+  const m=syncGetMeta();m.updated_at=Date.now();syncSetMeta(m);
+  syncSchedulePush();
+}
+function syncPushNow(){
+  if(!SYNC_ENABLED)return;
+  if(syncPushTimer){clearTimeout(syncPushTimer);syncPushTimer=null;}
+  const meta=syncGetMeta();
+  const snap=syncBuildSnapshot(localStorage,meta.updated_at||Date.now());
+  fetch(SYNC_URL,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snap)}).then(function(r){
+    if(!r.ok)return;
+    const m2=syncGetMeta();m2.last_synced_at=Date.now();syncSetMeta(m2);
+    if(m2.updated_at!==snap.updated_at)syncSchedulePush();
+  }).catch(function(){});
+}
+const syncOrigSetItem=Storage.prototype.setItem;
+Storage.prototype.setItem=function(k,v){
+  syncOrigSetItem.call(this,k,v);
+  if(this===localStorage&&!syncApplying&&SYNC_KEYS.indexOf(k)>=0)syncOnLocalWrite();
+};
+function syncApplyCloud(cloud){
+  syncApplying=true;
+  try{
+    const data=(cloud&&cloud.data)||{};
+    SYNC_KEYS.forEach(function(k){
+      if(Object.prototype.hasOwnProperty.call(data,k)){
+        if(data[k]===null||data[k]===undefined)localStorage.removeItem(k);
+        else localStorage.setItem(k,String(data[k]));
+      }
+    });
+    syncSetMeta({updated_at:(cloud&&typeof cloud.updated_at==='number')?cloud.updated_at:0,last_synced_at:Date.now()});
+  }catch(e){}
+  syncApplying=false;
+}
+function syncFetchCloud(){
+  const ctrl=('AbortController' in window)?new AbortController():null;
+  const timer=ctrl?setTimeout(function(){ctrl.abort();},SYNC_TIMEOUT_MS):null;
+  const opt={method:'GET'};
+  if(ctrl)opt.signal=ctrl.signal;
+  return fetch(SYNC_URL,opt).then(function(r){
+    if(timer)clearTimeout(timer);
+    if(!r.ok)throw new Error('sync get failed');
+    return r.json();
+  });
+}
+function syncStartup(){
+  if(!SYNC_ENABLED)return;
+  syncFetchCloud().then(function(cloud){
+    const cloudUpdated=(cloud&&typeof cloud.updated_at==='number')?cloud.updated_at:0;
+    const meta=syncGetMeta();
+    const action=syncDecide(meta.updated_at,cloudUpdated,syncHasLocalState(localStorage));
+    if(action==='pull'){
+      syncApplyCloud(cloud);
+      let reloaded=false;
+      try{reloaded=!!sessionStorage.getItem(SYNC_RELOAD_FLAG);}catch(e){}
+      if(!reloaded){
+        try{sessionStorage.setItem(SYNC_RELOAD_FLAG,'1');}catch(e){}
+        location.reload();
+      }
+    }else if(action==='push'){
+      try{sessionStorage.removeItem(SYNC_RELOAD_FLAG);}catch(e){}
+      syncPushNow();
+    }else{
+      try{sessionStorage.removeItem(SYNC_RELOAD_FLAG);}catch(e){}
+      if(cloudUpdated>0){const m2=syncGetMeta();m2.last_synced_at=Date.now();syncSetMeta(m2);}
+    }
+  }).catch(function(){});
+}
+document.addEventListener('DOMContentLoaded',function(){syncStartup();});
