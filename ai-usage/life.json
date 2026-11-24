@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-24T20:51:43+09:00",
+  "updated_at": "2026-11-24T21:23:42+09:00",
   "unread_count": 17,
   "unread_url": "https://ega-masa.github.io/life-is-beautiful-blog/unread.html",
   "items": [
@@ -26,6 +26,54 @@
       "issue_date": "2026-06-02",
       "genre": "思考法・キャリア",
       "url": "https://ega-masa.github.io/life-is-beautiful-blog/t/5.html"
+    },
+    {
+      "id": 15,
+      "title": "Alphabet 21年ぶり大型増資の真相 — 自社株買いから設備投資へ",
+      "short_title": "Alphabet 21年ぶり大型増資の真相 — 自社株買いから設備投資へ",
+      "delivery_label": "11月22日 夕の配信分",
+      "summary": "Alphabetが21年ぶりに約$80Bの公募増資に踏み切った背景を、設備投資と自社株買いの推移から読み解く話。AIインフラ投資の急増で事業のキャッシュフローだけでは足りなくなり、借金と増資でまかなう転換点。",
+      "score": 80,
+      "score_comment": "21年ぶりの大型増資とxAIからのGPU調達という新事実。AIインフラ投資の転換点",
+      "issue_date": "2026-06-09",
+      "genre": "企業ケース",
+      "url": "https://ega-masa.github.io/life-is-beautiful-blog/t/15.html"
+    },
+    {
+      "id": 16,
+      "title": "「ネット負債」という考え方 — 帳簿に載らない借金まで見る財務分析",
+      "short_title": "「ネット負債」という考え方 — 帳簿に載らない借金まで見る財務分析",
+      "delivery_label": "11月22日 夕の配信分",
+      "summary": "Freda Duan氏のX投稿を紹介しつつ、Alphabet・Meta・Amazonの財務健全性を「ネット負債」で比べ直す話。フリーキャッシュフローだけでなく、帳簿に載らない債務も含めて評価すると、3社の体力には大きな差が出る。",
+      "score": 69,
+      "score_comment": "ネット負債という分析軸そのものが新しい。銘柄を見る目が変わる実践的な内容",
+      "issue_date": "2026-06-09",
+      "genre": "投資・金融",
+      "url": "https://ega-masa.github.io/life-is-beautiful-blog/t/16.html"
+    },
+    {
+      "id": 18,
+      "title": "AIの誕生によって低下する人類の知能 — 学習の外部性と知識の枯渇",
+      "short_title": "AIの誕生によって低下する人類の知能 — 学習の外部性と知識の枯渇",
+      "delivery_label": "11月23日 夕の配信分",
+      "summary": "2024年ノーベル経済学賞のAcemoglu教授（MIT）らの論文（NBER w34910）が、「AIが人間の学ぶ動機を奪うと、社会全体の知識が枯渇する」可能性を示した話。AIに任せれば目先の判断は良くなるが、「学ぶ」という行為そのものをやめてしまうと、社会全体の知識の土台が痩せていく。",
+      "score": 73,
+      "score_comment": "ノーベル賞学者の新論文が示す逆説。AI時代の学び方を考え直す知的刺激が強い",
+      "issue_date": "2026-06-09",
+      "genre": "社会・時事",
+      "url": "https://ega-masa.github.io/life-is-beautiful-blog/t/18.html"
+    },
+    {
+      "id": 19,
+      "title": "私の目に留まった記事 — ニューロン更新、MAI-Thinking-1、Anthropic上場準備など8本",
+      "short_title": "ニューロン更新、MAI-Thinking-1、Anthropic上場準備など8本",
+      "delivery_label": "11月23日 夕の配信分",
+      "summary": "今週の記事8本。ニューロンのモデル更新、Microsoftの推論モデル、ByteDanceのCPU内製化、Anthropicの上場準備、SpaceX社員の株式売却、AIの軍事利用への警告、AIスタートアップの生き残り策、LLMコモディティ化とPalantir／ServiceNow。8本を貫くのは「AIの主役がモデルそのものから、モデルを動かす土台と、モデルを業務に組み込む仕組みへ移っている」という流れ。",
+      "score": 80,
+      "score_comment": "Anthropic上場準備やMicrosoftの新モデルなど、AIの主役交代を感じさせる8本",
+      "issue_date": "2026-06-09",
+      "genre": "テクノロジー・AI",
+      "url": "https://ega-masa.github.io/life-is-beautiful-blog/t/19.html"
     }
   ]
 }
