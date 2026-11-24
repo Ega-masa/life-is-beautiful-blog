@@ -150,6 +150,32 @@ function initSortUI(){
   });
   if(document.querySelector('ul.sortable'))applySort();
 }
+const FILTER_KEY='lib_filter_v1';
+const FILTER_STATUSES=['all','unread','read','later','skip'];
+function getFilterPref(){
+  try{const f=JSON.parse(localStorage.getItem(FILTER_KEY));if(f&&typeof f==='object'&&!Array.isArray(f)){
+    return {status:(FILTER_STATUSES.indexOf(f.status)>=0)?f.status:'all',
+            genre:(typeof f.genre==='string'&&f.genre)?f.genre:'all',
+            issue:(typeof f.issue==='string'&&f.issue)?f.issue:'all',
+            keyword:(typeof f.keyword==='string')?f.keyword:''};
+  }}catch(e){}
+  return {status:'all',genre:'all',issue:'all',keyword:''};
+}
+function setFilterPref(f){localStorage.setItem(FILTER_KEY,JSON.stringify(f))}
+function themeMatchesStatus(id,status,read,later,skip){
+  if(status==='unread')return !read.includes(id);
+  if(status==='read')return read.includes(id);
+  if(status==='later')return later.includes(id);
+  if(status==='skip')return skip.includes(id);
+  return true;
+}
+function rowMatchesFilter(v,f,ctx){
+  if(!themeMatchesStatus(v.tid,f.status,ctx.read,ctx.later,ctx.skip))return false;
+  if(f.genre!=='all'&&v.genre!==f.genre)return false;
+  if(f.issue!=='all'&&v.issue!==f.issue)return false;
+  if(f.keyword&&String(v.title||'').indexOf(f.keyword)<0)return false;
+  return true;
+}
 document.addEventListener('DOMContentLoaded',function(){
   initSortUI();
   const mb=document.getElementById('menuBtn'),mp=document.getElementById('menuPanel');

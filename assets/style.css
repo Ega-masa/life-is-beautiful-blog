@@ -47,6 +47,10 @@ footer{color:var(--sub);font-size:12px;margin-top:36px;text-align:center}
 .sortbar label{font-size:13.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
 .sortbar select{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit}
 .sortbar button.mini:disabled{cursor:default}
+.filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+.filterbar label{font-size:13.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
+.filterbar select,.filterbar input[type="search"]{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit}
+.filterbar input[type="search"]{flex:1;min-width:140px}
 .topbar-home{font-size:13px;font-weight:700;white-space:nowrap}
 .menu-in{max-width:760px;margin:0 auto;padding:4px 14px 10px;display:flex;flex-wrap:wrap;gap:6px}
 .menu-in a{flex:1 1 40%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;text-align:center;color:var(--ink)}

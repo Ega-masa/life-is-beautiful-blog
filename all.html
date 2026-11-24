@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>すべての記事 | Life is beautiful 学びの場</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><a class="topbar-title" href="index.html">Life is beautiful 学びの場</a><a class="topbar-home" href="index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in"><a href="index.html">トップ</a><a href="unread.html">未読リスト</a><a href="all.html">すべての記事</a><a href="deliveries.html">配信ごと</a><a href="issues.html">号ごと</a><a href="genres.html">ジャンル</a><a href="glossary.html">用語集</a><a href="later.html">後で読む</a><a href="memo.html">メモ</a></div></nav></div><div class="wrap">
+<header class="site"><h1>すべての記事</h1>
+<p class="meta">登録されているテーマをすべて並べています（号の日付順）。フィルターと並べ替えは組み合わせて使えます。状態（既読・後で読む・いらない）はこの端末に保存された状態で判定します。</p></header>
+<div class="filterbar">
+<label>状態 <select data-filter-status>
+<option value="all">すべて</option>
+<option value="unread">未読</option>
+<option value="read">既読</option>
+<option value="later">後で読む</option>
+<option value="skip">いらない</option>
+</select></label>
+<label>ジャンル <select data-filter-genre>
+<option value="all">すべて</option>
+<option value="企業ケース">企業ケース</option><option value="経営・事業戦略">経営・事業戦略</option><option value="投資・金融">投資・金融</option><option value="思考法・キャリア">思考法・キャリア</option><option value="テクノロジー・AI">テクノロジー・AI</option><option value="社会・時事">社会・時事</option>
+</select></label>
+<label>号 <select data-filter-issue>
+<option value="all">すべて</option>
+<option value="2026-06-02">2026年6月2日号</option><option value="2026-06-09">2026年6月9日号</option><option value="2026-11-17">2026年11月17日号</option>
+</select></label>
+<input type="search" data-filter-keyword placeholder="題名で絞り込む" aria-label="題名で絞り込む">
+<button type="button" class="mini" data-filter-reset>リセット</button>
+</div>
+<p class="meta" id="filterCount"></p>
+<div class="sortbar"><label>並べ替え <select data-sort-key>
+<option value="default">既定（表示順）</option>
+<option value="total">総合点</option>
+<option value="novelty">新規性</option>
+<option value="interest">面白さ</option>
+<option value="buzz">話題性</option>
+<option value="relevance">関連度</option>
+<option value="genre">ジャンル</option>
+</select></label><button type="button" class="mini" data-sort-dir>降順 ▼</button></div>
+<ul class="list sortable" id="allList">
+<li data-tid="1" data-total="77" data-novelty="20" data-interest="21" data-buzz="16" data-relevance="20" data-genre-idx="6" data-issue="2026-06-02" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/1.html">Antigravity 2.0 — 速さのGoogle、全体把握のClaude Code</a><br><span class="meta">2026年6月2日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 77点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="1">後で読む</button><button class="mini skipb" data-skip-btn="1">いらない</button></span></li>
+<li data-tid="2" data-total="77" data-novelty="24" data-interest="20" data-buzz="10" data-relevance="23" data-genre-idx="6" data-issue="2026-06-02" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/2.html">LLMデータベース — AIが文脈を読む、新しいデータベースの形</a><br><span class="meta">2026年6月2日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 77点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="2">後で読む</button><button class="mini skipb" data-skip-btn="2">いらない</button></span></li>
+<li data-tid="3" data-total="84" data-novelty="18" data-interest="20" data-buzz="22" data-relevance="24" data-genre-idx="3" data-issue="2026-06-02" data-genre-name="投資・金融"><a class="ttl" href="t/3.html">SpaceXの「上場祭り」 — ファンド経由で未上場株に乗る方法</a><br><span class="meta">2026年6月2日号｜ジャンル: 投資・金融</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 84点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="3">後で読む</button><button class="mini skipb" data-skip-btn="3">いらない</button></span></li>
+<li data-tid="4" data-total="74" data-novelty="16" data-interest="22" data-buzz="15" data-relevance="21" data-genre-idx="2" data-issue="2026-06-02" data-genre-name="経営・事業戦略"><a class="ttl" href="t/4.html">私の目に留まった記事 — AIは人間を強くし、仕事と組織を変えていく</a><br><span class="meta">2026年6月2日号｜ジャンル: 経営・事業戦略</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 74点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="4">後で読む</button><button class="mini skipb" data-skip-btn="4">いらない</button></span></li>
+<li data-tid="5" data-total="63" data-novelty="14" data-interest="19" data-buzz="8" data-relevance="22" data-genre-idx="4" data-issue="2026-06-02" data-genre-name="思考法・キャリア"><a class="ttl" href="t/5.html">質問コーナー — 設計原則、常時接続AI、監視社会まで12問</a><br><span class="meta">2026年6月2日号｜ジャンル: 思考法・キャリア</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 63点</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="5">後で読む</button><button class="mini skipb" data-skip-btn="5">いらない</button></span></li>
+<li data-tid="15" data-total="80" data-novelty="19" data-interest="18" data-buzz="20" data-relevance="23" data-genre-idx="1" data-issue="2026-06-09" data-genre-name="企業ケース"><a class="ttl" href="t/15.html">Alphabet 21年ぶり大型増資の真相 — 自社株買いから設備投資へ</a><br><span class="meta">2026年6月9日号｜ジャンル: 企業ケース</span><br><span class="badge">2026年11月22日 夕の配信分</span><span class="badge score">AI評価 80点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="15">後で読む</button><button class="mini skipb" data-skip-btn="15">いらない</button></span></li>
+<li data-tid="16" data-total="69" data-novelty="18" data-interest="16" data-buzz="12" data-relevance="23" data-genre-idx="3" data-issue="2026-06-09" data-genre-name="投資・金融"><a class="ttl" href="t/16.html">「ネット負債」という考え方 — 帳簿に載らない借金まで見る財務分析</a><br><span class="meta">2026年6月9日号｜ジャンル: 投資・金融</span><br><span class="badge">2026年11月22日 夕の配信分</span><span class="badge score">AI評価 69点</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="16">後で読む</button><button class="mini skipb" data-skip-btn="16">いらない</button></span></li>
+<li data-tid="18" data-total="73" data-novelty="20" data-interest="21" data-buzz="13" data-relevance="19" data-genre-idx="7" data-issue="2026-06-09" data-genre-name="社会・時事"><a class="ttl" href="t/18.html">AIの誕生によって低下する人類の知能 — 学習の外部性と知識の枯渇</a><br><span class="meta">2026年6月9日号｜ジャンル: 社会・時事</span><br><span class="badge">2026年11月23日 夕の配信分</span><span class="badge score">AI評価 73点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="18">後で読む</button><button class="mini skipb" data-skip-btn="18">いらない</button></span></li>
+<li data-tid="19" data-total="80" data-novelty="19" data-interest="21" data-buzz="19" data-relevance="21" data-genre-idx="6" data-issue="2026-06-09" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/19.html">私の目に留まった記事 — ニューロン更新、MAI-Thinking-1、Anthropic上場準備など8本</a><br><span class="meta">2026年6月9日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月23日 夕の配信分</span><span class="badge score">AI評価 80点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="19">後で読む</button><button class="mini skipb" data-skip-btn="19">いらない</button></span></li>
+<li data-tid="24" data-total="72" data-novelty="18" data-interest="20" data-buzz="13" data-relevance="21" data-genre-idx="6" data-issue="2026-06-09" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/24.html">質問コーナー（9問）</a><br><span class="meta">2026年6月9日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月24日 夕の配信分</span><span class="badge score">AI評価 72点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="24">後で読む</button><button class="mini skipb" data-skip-btn="24">いらない</button></span></li>
+<li data-tid="6" data-total="90" data-novelty="22" data-interest="22" data-buzz="24" data-relevance="22" data-genre-idx="6" data-issue="2026-11-17" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/6.html">SpaceX Starship本体キャッチ成功 — 宇宙に浮かぶAIデータセンターへ</a><br><span class="meta">2026年11月17日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 90点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="6">後で読む</button><button class="mini skipb" data-skip-btn="6">いらない</button></span></li>
+<li data-tid="7" data-total="91" data-novelty="21" data-interest="23" data-buzz="25" data-relevance="22" data-genre-idx="1" data-issue="2026-11-17" data-genre-name="企業ケース"><a class="ttl" href="t/7.html">ジェンセン・フアンCEOの辞任 — NVIDIAの行方</a><br><span class="meta">2026年11月17日号｜ジャンル: 企業ケース</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 91点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="7">後で読む</button><button class="mini skipb" data-skip-btn="7">いらない</button></span></li>
+<li data-tid="8" data-total="51" data-novelty="13" data-interest="19" data-buzz="9" data-relevance="10" data-genre-idx="7" data-issue="2026-11-17" data-genre-name="社会・時事"><a class="ttl" href="t/8.html">なぜハワイの入国審査で若い女性が別室に連れて行かれるか</a><br><span class="meta">2026年11月17日号｜ジャンル: 社会・時事</span><br><span class="badge">2026年11月21日 夕の配信分</span><span class="badge score">AI評価 51点</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="8">後で読む</button><button class="mini skipb" data-skip-btn="8">いらない</button></span></li>
+<li data-tid="9" data-total="78" data-novelty="20" data-interest="19" data-buzz="16" data-relevance="23" data-genre-idx="3" data-issue="2026-11-17" data-genre-name="投資・金融"><a class="ttl" href="t/9.html">ムーアの法則とAIバブル — 3つの「相転移」</a><br><span class="meta">2026年11月17日号｜ジャンル: 投資・金融</span><br><span class="badge">2026年11月22日 朝の配信分</span><span class="badge score">AI評価 78点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="9">後で読む</button><button class="mini skipb" data-skip-btn="9">いらない</button></span></li>
+<li data-tid="10" data-total="77" data-novelty="24" data-interest="20" data-buzz="14" data-relevance="19" data-genre-idx="6" data-issue="2026-11-17" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/10.html">AI研究の最前線 — エージェントの記憶と「夢」／量子コンピュータの予想をAIが証明</a><br><span class="meta">2026年11月17日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月22日 朝の配信分</span><span class="badge score">AI評価 77点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="10">後で読む</button><button class="mini skipb" data-skip-btn="10">いらない</button></span></li>
+<li data-tid="11" data-total="65" data-novelty="15" data-interest="18" data-buzz="15" data-relevance="17" data-genre-idx="4" data-issue="2026-11-17" data-genre-name="思考法・キャリア"><a class="ttl" href="t/11.html">AIで燃え尽きるエンジニアたち</a><br><span class="meta">2026年11月17日号｜ジャンル: 思考法・キャリア</span><br><span class="badge">2026年11月23日 朝の配信分</span><span class="badge score">AI評価 65点</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="11">後で読む</button><button class="mini skipb" data-skip-btn="11">いらない</button></span></li>
+<li data-tid="17" data-total="79" data-novelty="20" data-interest="21" data-buzz="19" data-relevance="19" data-genre-idx="6" data-issue="2026-11-17" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/17.html">記事グループA：自動運転・ロボタクシー</a><br><span class="meta">2026年11月17日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月23日 朝の配信分</span><span class="badge score">AI評価 79点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="17">後で読む</button><button class="mini skipb" data-skip-btn="17">いらない</button></span></li>
+<li data-tid="20" data-total="75" data-novelty="19" data-interest="20" data-buzz="18" data-relevance="18" data-genre-idx="6" data-issue="2026-11-17" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/20.html">記事グループB：AIモデルとオープン化</a><br><span class="meta">2026年11月17日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月24日 朝の配信分</span><span class="badge score">AI評価 75点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="20">後で読む</button><button class="mini skipb" data-skip-btn="20">いらない</button></span></li>
+<li data-tid="21" data-total="80" data-novelty="20" data-interest="21" data-buzz="20" data-relevance="19" data-genre-idx="6" data-issue="2026-11-17" data-genre-name="テクノロジー・AI"><a class="ttl" href="t/21.html">記事グループC：AI産業の構造と競争</a><br><span class="meta">2026年11月17日号｜ジャンル: テクノロジー・AI</span><br><span class="badge">2026年11月24日 朝の配信分</span><span class="badge score">AI評価 80点</span><span class="badge newb">新しい学び</span><span class="badge read" data-read-badge style="display:none">既読</span><span class="rowbtns"><button class="mini" data-later-btn="21">後で読む</button><button class="mini skipb" data-skip-btn="21">いらない</button></span></li>
+</ul>
+<footer>週刊 Life is beautiful 学びの場</footer>
+<script src="assets/app.js"></script>
+<script>
+function readRowVals(el){
+  const ttl=el.querySelector('.ttl');
+  return {tid:+el.dataset.tid,title:ttl?ttl.textContent:'',genre:el.getAttribute('data-genre-name')||'',issue:el.getAttribute('data-issue')||''};
+}
+function applyFilter(){
+  const f=getFilterPref();
+  const ctx={read:getRead(),later:getLater(),skip:getSkip()};
+  let shown=0,total=0;
+  document.querySelectorAll('#allList [data-tid]').forEach(function(el){
+    total++;
+    const ok=rowMatchesFilter(readRowVals(el),f,ctx);
+    el.style.display=ok?'':'none';
+    if(ok)shown++;
+  });
+  document.getElementById('filterCount').textContent='全'+total+'件中 '+shown+'件を表示';
+  const st=document.querySelector('[data-filter-status]');if(st)st.value=f.status;
+  const ge=document.querySelector('[data-filter-genre]');if(ge){ge.value=f.genre;if(ge.value!==f.genre){ge.value='all';}}
+  const is=document.querySelector('[data-filter-issue]');if(is){is.value=f.issue;if(is.value!==f.issue){is.value='all';}}
+  const kw=document.querySelector('[data-filter-keyword]');if(kw&&kw.value!==f.keyword)kw.value=f.keyword;
+}
+function bindFilter(sel,field){
+  const el=document.querySelector(sel);if(!el)return;
+  el.addEventListener('input',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
+  el.addEventListener('change',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
+}
+bindFilter('[data-filter-status]','status');
+bindFilter('[data-filter-genre]','genre');
+bindFilter('[data-filter-issue]','issue');
+bindFilter('[data-filter-keyword]','keyword');
+const rst=document.querySelector('[data-filter-reset]');
+if(rst)rst.addEventListener('click',function(){setFilterPref({status:'all',genre:'all',issue:'all',keyword:''});applyFilter();});
+window.onPrefChange=applyFilter;
+applyFilter();
+</script></div></body></html>

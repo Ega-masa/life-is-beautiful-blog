@@ -4,7 +4,7 @@
 Life is beautiful 学びの場 — 静的サイト生成スクリプト
 
 data/themes.json（学習スペース getlibrary の出力が正本）から、
-index.html / unread.html / t/<theme_id>.html / glossary.html /
+index.html / unread.html / all.html / t/<theme_id>.html / glossary.html /
 deliveries.html / issues.html / genres.html / genre/<slug>.html /
 later.html / memo.html を生成する。
 
@@ -42,14 +42,21 @@ later.html / memo.html を生成する。
 - 固定ヘッダーのサイトタイトルはトップ（index.html）へのリンク
   （2026-11-24 夜の主君の決定）。サブフォルダのページでは prefix で
   相対パスを解決する。
-- 一覧ページ（トップの未読リスト・未読・配信ごと・号ごと・ジャンル別）には
-  並べ替えバーを置く（同じく 2026-11-24 夜の主君の決定）。キー＝既定／
-  総合点／新規性／面白さ／話題性／関連度／ジャンル、各キーに昇順・降順。
-  実装はクライアント側 JS（assets/app.js、選択は localStorage の
+- 一覧ページ（トップの未読リスト・未読・配信ごと・号ごと・ジャンル別・
+  すべての記事）には並べ替えバーを置く（同じく 2026-11-24 夜の主君の決定）。
+  キー＝既定／総合点／新規性／面白さ／話題性／関連度／ジャンル、各キーに
+  昇順・降順。実装はクライアント側 JS（assets/app.js、選択は localStorage の
   lib_sort_v1 に保存し全一覧ページで共通）。各テーマ行は data 属性に
   評価の各軸とジャンル順序（GENRES の定義順）を持ち、未評価・ジャンル
   無しは点数系・ジャンル順のどちらでも常に最後に置く。配信ごと・号ごとは
   グループ構造を保ち、各グループの中で並べ替える。
+- all.html（すべての記事、2026-11-24 夜の主君の決定で新設）は登録テーマ
+  全部（配信済み・未配信とも、リダイレクト専用の旧 id は除く）を1つの
+  一覧に並べ、並べ替えに加えてフィルター（状態＝すべて／未読／既読／
+  後で読む／いらない、ジャンル、号、題名キーワードの AND 条件）を付ける。
+  状態は静的 HTML には持たせず、端末の localStorage（既読 lib_read_v1、
+  選択 lib_pref_v1）から読み取り時に判定する。フィルターの選択は
+  lib_filter_v1 に保存し次回も維持する。表示件数は「全X件中 Y件を表示」。
 - 今後の配信ジョブは、themes.json を更新してから `python3 build.py` を
   再実行すればサイト全体が再生成される。
 
@@ -179,6 +186,10 @@ footer{color:var(--sub);font-size:12px;margin-top:36px;text-align:center}
 .sortbar label{font-size:13.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
 .sortbar select{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit}
 .sortbar button.mini:disabled{cursor:default}
+.filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+.filterbar label{font-size:13.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
+.filterbar select,.filterbar input[type="search"]{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit}
+.filterbar input[type="search"]{flex:1;min-width:140px}
 .topbar-home{font-size:13px;font-weight:700;white-space:nowrap}
 .menu-in{max-width:760px;margin:0 auto;padding:4px 14px 10px;display:flex;flex-wrap:wrap;gap:6px}
 .menu-in a{flex:1 1 40%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;text-align:center;color:var(--ink)}
@@ -372,6 +383,32 @@ function initSortUI(){
   });
   if(document.querySelector('ul.sortable'))applySort();
 }
+const FILTER_KEY='lib_filter_v1';
+const FILTER_STATUSES=['all','unread','read','later','skip'];
+function getFilterPref(){
+  try{const f=JSON.parse(localStorage.getItem(FILTER_KEY));if(f&&typeof f==='object'&&!Array.isArray(f)){
+    return {status:(FILTER_STATUSES.indexOf(f.status)>=0)?f.status:'all',
+            genre:(typeof f.genre==='string'&&f.genre)?f.genre:'all',
+            issue:(typeof f.issue==='string'&&f.issue)?f.issue:'all',
+            keyword:(typeof f.keyword==='string')?f.keyword:''};
+  }}catch(e){}
+  return {status:'all',genre:'all',issue:'all',keyword:''};
+}
+function setFilterPref(f){localStorage.setItem(FILTER_KEY,JSON.stringify(f))}
+function themeMatchesStatus(id,status,read,later,skip){
+  if(status==='unread')return !read.includes(id);
+  if(status==='read')return read.includes(id);
+  if(status==='later')return later.includes(id);
+  if(status==='skip')return skip.includes(id);
+  return true;
+}
+function rowMatchesFilter(v,f,ctx){
+  if(!themeMatchesStatus(v.tid,f.status,ctx.read,ctx.later,ctx.skip))return false;
+  if(f.genre!=='all'&&v.genre!==f.genre)return false;
+  if(f.issue!=='all'&&v.issue!==f.issue)return false;
+  if(f.keyword&&String(v.title||'').indexOf(f.keyword)<0)return false;
+  return true;
+}
 document.addEventListener('DOMContentLoaded',function(){
   initSortUI();
   const mb=document.getElementById('menuBtn'),mp=document.getElementById('menuPanel');
@@ -400,6 +437,7 @@ document.addEventListener('DOMContentLoaded',function(){
 MENU_ITEMS = [
     ("index.html", "トップ"),
     ("unread.html", "未読リスト"),
+    ("all.html", "すべての記事"),
     ("deliveries.html", "配信ごと"),
     ("issues.html", "号ごと"),
     ("genres.html", "ジャンル"),
@@ -498,10 +536,8 @@ def sort_bar(note=""):
 <option value="genre">ジャンル</option>
 </select></label><button type="button" class="mini" data-sort-dir>降順 ▼</button>{n}</div>"""
 
-def theme_li(t, href):
-    """一覧ページ共通のテーマ行（既読バッジ・評価・選択ボタン付き）。
-    並べ替え用に、評価の各軸（総合点・新規性・面白さ・話題性・関連度）と
-    ジャンル順序（GENRES の定義順の番号）を data 属性として持つ。
+def sort_attrs(t):
+    """並べ替え用 data 属性（評価の各軸とジャンル順序）。
     未評価・ジャンル無しのテーマには付けない（JS 側で常に最後に置かれる）。"""
     attrs = ""
     ev = t.get("evaluation")
@@ -512,7 +548,25 @@ def theme_li(t, href):
     gidx = GENRE_INDEX.get(t.get("genre") or "")
     if gidx is not None:
         attrs += f' data-genre-idx="{gidx}"'
-    return (f'<li data-tid="{t["id"]}"{attrs}><a class="ttl" href="{href}">{esc(t["title"] or "")}</a><br>'
+    return attrs
+
+def theme_li(t, href):
+    """一覧ページ共通のテーマ行（既読バッジ・評価・選択ボタン付き）。
+    並べ替え用に、評価の各軸（総合点・新規性・面白さ・話題性・関連度）と
+    ジャンル順序（GENRES の定義順の番号）を data 属性として持つ。
+    未評価・ジャンル無しのテーマには付けない（JS 側で常に最後に置かれる）。"""
+    return (f'<li data-tid="{t["id"]}"{sort_attrs(t)}><a class="ttl" href="{href}">{esc(t["title"] or "")}</a><br>'
+            f'{badges(t)}<span class="badge read" data-read-badge style="display:none">既読</span>'
+            f'{toggle_btns(t)}</li>')
+
+def all_theme_li(t, href):
+    """すべての記事ページ専用のテーマ行。theme_li と同じ体裁に、号とジャンルを
+    メタ行で明示し、フィルター用に data-issue / data-genre-name を持つ。
+    配信ラベル・配信状況（未配信）・総合点は badges() がバッジで出す。"""
+    return (f'<li data-tid="{t["id"]}"{sort_attrs(t)} data-issue="{esc(t["issue_date"])}"'
+            f' data-genre-name="{esc(t.get("genre") or "")}">'
+            f'<a class="ttl" href="{href}">{esc(t["title"] or "")}</a><br>'
+            f'<span class="meta">{esc(issue_label(t["issue_date"]))}｜ジャンル: {esc(t.get("genre") or "未分類")}</span><br>'
             f'{badges(t)}<span class="badge read" data-read-badge style="display:none">既読</span>'
             f'{toggle_btns(t)}</li>')
 
@@ -576,6 +630,7 @@ def main():
         (OUT_T / f"{old_id}.html").write_text(redirect_page(old_id, target), encoding="utf-8")
     (BASE / "index.html").write_text(index_page(delivered, reading_order), encoding="utf-8")
     (BASE / "unread.html").write_text(unread_page(delivered, reading_order), encoding="utf-8")
+    (BASE / "all.html").write_text(all_page(themes, issues), encoding="utf-8")
     (BASE / "deliveries.html").write_text(deliveries_page(delivered), encoding="utf-8")
     (BASE / "issues.html").write_text(issues_page(issues), encoding="utf-8")
     (BASE / "glossary.html").write_text(glossary_page(themes), encoding="utf-8")
@@ -585,7 +640,7 @@ def main():
         (OUT_G / f"{slug}.html").write_text(genre_page(name, genre_themes.get(name, [])), encoding="utf-8")
     (BASE / "later.html").write_text(later_page(delivered, reading_order), encoding="utf-8")
     (BASE / "memo.html").write_text(memo_page(delivered), encoding="utf-8")
-    print(f"built: index + unread + {len(themes)} theme pages + glossary + deliveries + issues + genres + {len(GENRES)} genre pages + later + memo; slides mapped: {sorted(slide_of)}")
+    print(f"built: index + unread + all + {len(themes)} theme pages + glossary + deliveries + issues + genres + {len(GENRES)} genre pages + later + memo; slides mapped: {sorted(slide_of)}")
 
 def eval_html(t):
     """AI評価パネル（通常テーマと Q&A テーマで共用）"""
@@ -771,6 +826,7 @@ def index_page(delivered, reading_order):
     parts.append('</ul>')
     parts.append("""<div class="navrow">
 <a href="unread.html">未読リスト</a>
+<a href="all.html">すべての記事</a>
 <a href="deliveries.html">配信ごとに見る</a>
 <a href="issues.html">号ごとに見る</a>
 <a href="genres.html">ジャンルで見る</a>
@@ -832,6 +888,84 @@ window.onPrefChange=render;
 render();
 </script></div></body></html>"""
     parts.append(script.replace("__ORDER__", json.dumps(reading_order)))
+    return "\n".join(parts)
+
+def all_page(themes, issues):
+    """すべての記事: 登録テーマ全部（配信済み・未配信とも）を号の日付順・号内順に
+    並べた単一の一覧。並べ替えバー（既存の共通仕組み）に加えて、状態・ジャンル・
+    号・題名キーワードのフィルター（AND 条件）を付ける。状態は端末の
+    localStorage から読み取り時に判定し、選択は lib_filter_v1 に保存する。"""
+    present_genres = [(name, slug) for name, slug in GENRES
+                      if any(t.get("genre") == name for t in themes)]
+    present_issues = sorted(issues)
+    genre_opts = "".join(f'<option value="{esc(name)}">{esc(name)}</option>' for name, _ in present_genres)
+    issue_opts = "".join(f'<option value="{esc(d)}">{esc(issue_label(d))}</option>' for d in present_issues)
+    parts = [head("すべての記事 | Life is beautiful 学びの場", "")]
+    parts.append("""<header class="site"><h1>すべての記事</h1>
+<p class="meta">登録されているテーマをすべて並べています（号の日付順）。フィルターと並べ替えは組み合わせて使えます。状態（既読・後で読む・いらない）はこの端末に保存された状態で判定します。</p></header>
+<div class="filterbar">
+<label>状態 <select data-filter-status>
+<option value="all">すべて</option>
+<option value="unread">未読</option>
+<option value="read">既読</option>
+<option value="later">後で読む</option>
+<option value="skip">いらない</option>
+</select></label>
+<label>ジャンル <select data-filter-genre>
+<option value="all">すべて</option>
+""" + genre_opts + """
+</select></label>
+<label>号 <select data-filter-issue>
+<option value="all">すべて</option>
+""" + issue_opts + """
+</select></label>
+<input type="search" data-filter-keyword placeholder="題名で絞り込む" aria-label="題名で絞り込む">
+<button type="button" class="mini" data-filter-reset>リセット</button>
+</div>
+<p class="meta" id="filterCount"></p>
+""" + sort_bar() + """
+<ul class="list sortable" id="allList">""")
+    for date in present_issues:
+        for t in issues[date]:
+            parts.append(all_theme_li(t, f't/{t["id"]}.html'))
+    parts.append('</ul>')
+    parts.append("""<footer>週刊 Life is beautiful 学びの場</footer>
+<script src="assets/app.js"></script>
+<script>
+function readRowVals(el){
+  const ttl=el.querySelector('.ttl');
+  return {tid:+el.dataset.tid,title:ttl?ttl.textContent:'',genre:el.getAttribute('data-genre-name')||'',issue:el.getAttribute('data-issue')||''};
+}
+function applyFilter(){
+  const f=getFilterPref();
+  const ctx={read:getRead(),later:getLater(),skip:getSkip()};
+  let shown=0,total=0;
+  document.querySelectorAll('#allList [data-tid]').forEach(function(el){
+    total++;
+    const ok=rowMatchesFilter(readRowVals(el),f,ctx);
+    el.style.display=ok?'':'none';
+    if(ok)shown++;
+  });
+  document.getElementById('filterCount').textContent='全'+total+'件中 '+shown+'件を表示';
+  const st=document.querySelector('[data-filter-status]');if(st)st.value=f.status;
+  const ge=document.querySelector('[data-filter-genre]');if(ge){ge.value=f.genre;if(ge.value!==f.genre){ge.value='all';}}
+  const is=document.querySelector('[data-filter-issue]');if(is){is.value=f.issue;if(is.value!==f.issue){is.value='all';}}
+  const kw=document.querySelector('[data-filter-keyword]');if(kw&&kw.value!==f.keyword)kw.value=f.keyword;
+}
+function bindFilter(sel,field){
+  const el=document.querySelector(sel);if(!el)return;
+  el.addEventListener('input',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
+  el.addEventListener('change',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
+}
+bindFilter('[data-filter-status]','status');
+bindFilter('[data-filter-genre]','genre');
+bindFilter('[data-filter-issue]','issue');
+bindFilter('[data-filter-keyword]','keyword');
+const rst=document.querySelector('[data-filter-reset]');
+if(rst)rst.addEventListener('click',function(){setFilterPref({status:'all',genre:'all',issue:'all',keyword:''});applyFilter();});
+window.onPrefChange=applyFilter;
+applyFilter();
+</script></div></body></html>""")
     return "\n".join(parts)
 
 def deliveries_page(delivered):
