@@ -39,6 +39,17 @@ later.html / memo.html を生成する。
   質問ごとに「Q. 質問の要約／A. 回答の要約／ポイント／質問と回答の全文
   （details、初期状態は閉）」を並べる。旧来の個別質問テーマの URL は
   REDIRECTS で Q&A ページの該当アンカーへ転送する（リンク切れ防止）。
+- 固定ヘッダーのサイトタイトルはトップ（index.html）へのリンク
+  （2026-11-24 夜の主君の決定）。サブフォルダのページでは prefix で
+  相対パスを解決する。
+- 一覧ページ（トップの未読リスト・未読・配信ごと・号ごと・ジャンル別）には
+  並べ替えバーを置く（同じく 2026-11-24 夜の主君の決定）。キー＝既定／
+  総合点／新規性／面白さ／話題性／関連度／ジャンル、各キーに昇順・降順。
+  実装はクライアント側 JS（assets/app.js、選択は localStorage の
+  lib_sort_v1 に保存し全一覧ページで共通）。各テーマ行は data 属性に
+  評価の各軸とジャンル順序（GENRES の定義順）を持ち、未評価・ジャンル
+  無しは点数系・ジャンル順のどちらでも常に最後に置く。配信ごと・号ごとは
+  グループ構造を保ち、各グループの中で並べ替える。
 - 今後の配信ジョブは、themes.json を更新してから `python3 build.py` を
   再実行すればサイト全体が再生成される。
 
@@ -71,6 +82,8 @@ GENRES = [
     ("社会・時事", "society"),
 ]
 GENRE_SLUG = dict(GENRES)
+# ジャンル名 -> 定義順の番号（一覧のジャンル順ソートで使う）
+GENRE_INDEX = {name: i for i, (name, slug) in enumerate(GENRES)}
 
 # テーマID -> スライド画像（hidden_files からの相対パス）
 # 対応は生成スクリプトとファイル名から特定したものだけを載せる。
@@ -161,7 +174,11 @@ footer{color:var(--sub);font-size:12px;margin-top:36px;text-align:center}
 .stickyhead{position:sticky;top:0;z-index:60;background:var(--card);border-bottom:1px solid var(--line)}
 .topbar-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 14px}
 .burger{background:var(--badge);border:1px solid var(--line);border-radius:8px;font-size:17px;line-height:1;padding:7px 11px;cursor:pointer;color:var(--ink)}
-.topbar-title{font-weight:700;font-size:14px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-title{font-weight:700;font-size:14px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.sortbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+.sortbar label{font-size:13.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
+.sortbar select{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit}
+.sortbar button.mini:disabled{cursor:default}
 .topbar-home{font-size:13px;font-weight:700;white-space:nowrap}
 .menu-in{max-width:760px;margin:0 auto;padding:4px 14px 10px;display:flex;flex-wrap:wrap;gap:6px}
 .menu-in a{flex:1 1 40%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;text-align:center;color:var(--ink)}
@@ -304,7 +321,59 @@ document.addEventListener('click',function(e){
   const lb=e.target.closest('[data-later-btn]');if(lb){toggleLater(+lb.dataset.laterBtn);return;}
   const sb=e.target.closest('[data-skip-btn]');if(sb){toggleSkip(+sb.dataset.skipBtn);}
 });
+const SORT_KEY='lib_sort_v1';
+const SORT_KEYS=['default','total','novelty','interest','buzz','relevance','genre'];
+function getSortPref(){
+  try{const s=JSON.parse(localStorage.getItem(SORT_KEY));if(s&&SORT_KEYS.indexOf(s.key)>=0&&(s.dir==='asc'||s.dir==='desc'))return{key:s.key,dir:s.dir};}catch(e){}
+  return{key:'default',dir:'desc'};
+}
+function setSortPref(p){localStorage.setItem(SORT_KEY,JSON.stringify(p))}
+function sortItemsBy(items,pref){
+  const key=pref.key,dir=(pref.dir==='asc')?1:-1;
+  return items.slice().sort(function(a,b){
+    if(key==='default')return a.i-b.i;
+    const va=a[key],vb=b[key];
+    if(va===null&&vb===null)return a.i-b.i;
+    if(va===null)return 1;
+    if(vb===null)return -1;
+    const c=(va-vb)*dir;
+    return (c!==0)?c:(a.i-b.i);
+  });
+}
+function readSortVals(el){
+  function num(name){const v=el.getAttribute(name);return (v===null||v==='')?null:parseFloat(v);}
+  return {total:num('data-total'),novelty:num('data-novelty'),interest:num('data-interest'),buzz:num('data-buzz'),relevance:num('data-relevance'),genre:num('data-genre-idx')};
+}
+function applySort(){
+  const pref=getSortPref();
+  document.querySelectorAll('ul.sortable').forEach(function(ul){
+    const els=Array.prototype.slice.call(ul.children).filter(function(el){return el.hasAttribute&&el.hasAttribute('data-tid');});
+    const items=els.map(function(el,i){const o=readSortVals(el);o.i=i;o.el=el;return o;});
+    sortItemsBy(items,pref).forEach(function(o){ul.appendChild(o.el);});
+  });
+  document.querySelectorAll('[data-sort-key]').forEach(function(sel){sel.value=pref.key;});
+  document.querySelectorAll('[data-sort-dir]').forEach(function(btn){
+    btn.textContent=(pref.dir==='asc')?'昇順 ▲':'降順 ▼';
+    btn.disabled=(pref.key==='default');
+    btn.style.opacity=(pref.key==='default')?'0.5':'';
+  });
+}
+function initSortUI(){
+  document.querySelectorAll('[data-sort-key]').forEach(function(sel){
+    sel.value=getSortPref().key;
+    sel.addEventListener('change',function(){
+      const p=getSortPref();p.key=sel.value;setSortPref(p);applySort();
+    });
+  });
+  document.querySelectorAll('[data-sort-dir]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const p=getSortPref();p.dir=(p.dir==='asc')?'desc':'asc';setSortPref(p);applySort();
+    });
+  });
+  if(document.querySelector('ul.sortable'))applySort();
+}
 document.addEventListener('DOMContentLoaded',function(){
+  initSortUI();
   const mb=document.getElementById('menuBtn'),mp=document.getElementById('menuPanel');
   if(mb&&mp){mb.addEventListener('click',function(){mp.hidden=!mp.hidden;});mp.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){mp.hidden=true;});});}
   document.querySelectorAll('[data-memo-open]').forEach(function(btn){
@@ -352,7 +421,7 @@ def json_for_script(obj):
 
 def topbar(prefix):
     links = "".join(f'<a href="{prefix}{h}">{n}</a>' for h, n in MENU_ITEMS)
-    return f"""<div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><span class="topbar-title">Life is beautiful 学びの場</span><a class="topbar-home" href="{prefix}index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in">{links}</div></nav></div>"""
+    return f"""<div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><a class="topbar-title" href="{prefix}index.html">Life is beautiful 学びの場</a><a class="topbar-home" href="{prefix}index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in">{links}</div></nav></div>"""
 
 def head(title, prefix):
     return f"""<!DOCTYPE html>
@@ -415,9 +484,35 @@ def memo_ui(tid):
 </div>
 </div>"""
 
+def sort_bar(note=""):
+    """一覧ページ共通の並べ替えバー。操作と保存は assets/app.js（lib_sort_v1）が担う。
+    配信ごと・号ごとのページでは各グループの中で並べ替えるため、その旨を note で添える。"""
+    n = f'<span class="meta">{esc(note)}</span>' if note else ""
+    return f"""<div class="sortbar"><label>並べ替え <select data-sort-key>
+<option value="default">既定（表示順）</option>
+<option value="total">総合点</option>
+<option value="novelty">新規性</option>
+<option value="interest">面白さ</option>
+<option value="buzz">話題性</option>
+<option value="relevance">関連度</option>
+<option value="genre">ジャンル</option>
+</select></label><button type="button" class="mini" data-sort-dir>降順 ▼</button>{n}</div>"""
+
 def theme_li(t, href):
-    """一覧ページ共通のテーマ行（既読バッジ・評価・選択ボタン付き）"""
-    return (f'<li data-tid="{t["id"]}"><a class="ttl" href="{href}">{esc(t["title"] or "")}</a><br>'
+    """一覧ページ共通のテーマ行（既読バッジ・評価・選択ボタン付き）。
+    並べ替え用に、評価の各軸（総合点・新規性・面白さ・話題性・関連度）と
+    ジャンル順序（GENRES の定義順の番号）を data 属性として持つ。
+    未評価・ジャンル無しのテーマには付けない（JS 側で常に最後に置かれる）。"""
+    attrs = ""
+    ev = t.get("evaluation")
+    if ev:
+        attrs += (f' data-total="{ev["total"]}" data-novelty="{ev["novelty"]}"'
+                  f' data-interest="{ev["interest"]}" data-buzz="{ev["buzz"]}"'
+                  f' data-relevance="{ev["relevance"]}"')
+    gidx = GENRE_INDEX.get(t.get("genre") or "")
+    if gidx is not None:
+        attrs += f' data-genre-idx="{gidx}"'
+    return (f'<li data-tid="{t["id"]}"{attrs}><a class="ttl" href="{href}">{esc(t["title"] or "")}</a><br>'
             f'{badges(t)}<span class="badge read" data-read-badge style="display:none">既読</span>'
             f'{toggle_btns(t)}</li>')
 
@@ -668,8 +763,9 @@ def index_page(delivered, reading_order):
 <p class="meta">週刊 Life is beautiful のテーマ別まとめ。未読は古い順に並んでいます。</p></header>
 <h2>続きはここから</h2>
 <div id="continueBox"><p class="meta">読み込み中…</p></div>
-<h2>未読リスト（古い順）</h2>
-<ul class="list" id="unreadList">""")
+<h2>未読リスト</h2>
+""" + sort_bar() + """
+<ul class="list sortable" id="unreadList">""")
     for t in delivered:
         parts.append(theme_li(t, f't/{t["id"]}.html'))
     parts.append('</ul>')
@@ -713,7 +809,8 @@ def unread_page(delivered, reading_order):
     parts.append("""<header class="site"><h1>未読リスト</h1>
 <p class="meta">配信済みテーマを古い順に並べています。既読はグレー表示、「いらない」にしたテーマはここから外れます。</p>
 <p class="meta" id="unreadCount"></p></header>
-<ul class="list" id="unreadList">""")
+""" + sort_bar() + """
+<ul class="list sortable" id="unreadList">""")
     for t in delivered:
         parts.append(theme_li(t, f't/{t["id"]}.html'))
     parts.append('</ul>')
@@ -745,9 +842,10 @@ def deliveries_page(delivered):
     parts = [head("配信ごとに見る | Life is beautiful 学びの場", "")]
     parts.append("""<header class="site"><h1>配信ごとに見る</h1>
 <p class="meta">配信1回分ずつ、その回に届いたテーマを古い順に並べています。</p></header>""")
+    parts.append(sort_bar("並べ替えは各配信グループの中で効きます"))
     for label, ts in groups.items():
         lis = "".join(theme_li(t, f't/{t["id"]}.html') for t in ts)
-        parts.append(f'<div class="card"><div class="ttl">{esc(label)}</div><ul class="list">{lis}</ul></div>')
+        parts.append(f'<div class="card"><div class="ttl">{esc(label)}</div><ul class="list sortable">{lis}</ul></div>')
     parts.append('<footer>週刊 Life is beautiful 学びの場</footer><script src="assets/app.js"></script></div></body></html>')
     return "\n".join(parts)
 
@@ -756,10 +854,11 @@ def issues_page(issues):
     parts = [head("号ごとに見る | Life is beautiful 学びの場", "")]
     parts.append("""<header class="site"><h1>号ごとに見る</h1>
 <p class="meta">号ごとに、その号のテーマを並べています。</p></header>""")
+    parts.append(sort_bar("並べ替えは各号の中で効きます"))
     for date in sorted(issues):
         ts = issues[date]
         lis = "".join(theme_li(t, f't/{t["id"]}.html') for t in ts)
-        parts.append(f'<div class="card"><div class="ttl">{esc(issue_label(date))}</div><ul class="list">{lis}</ul></div>')
+        parts.append(f'<div class="card"><div class="ttl">{esc(issue_label(date))}</div><ul class="list sortable">{lis}</ul></div>')
     parts.append('<footer>週刊 Life is beautiful 学びの場</footer><script src="assets/app.js"></script></div></body></html>')
     return "\n".join(parts)
 
@@ -782,8 +881,9 @@ def genre_page(name, ts):
     parts.append(f"""<header class="site"><h1>ジャンル：{esc(name)}</h1>
 <p class="meta">このジャンルのテーマ一覧です（{len(ts)}件）。</p></header>""")
     if ts:
+        parts.append(sort_bar())
         lis = "".join(theme_li(t, f'../t/{t["id"]}.html') for t in ts)
-        parts.append(f'<ul class="list">{lis}</ul>')
+        parts.append(f'<ul class="list sortable">{lis}</ul>')
     else:
         parts.append('<p class="meta">まだテーマがありません。</p>')
     parts.append('<footer>週刊 Life is beautiful 学びの場</footer><script src="../assets/app.js"></script></div></body></html>')
