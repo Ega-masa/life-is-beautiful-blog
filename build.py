@@ -139,6 +139,8 @@ SLIDES = {
     17: "visuals_2026-11-23-am/slide_1117_am_t7a.png",
     20: "visuals_2026-11-24-am/slide_1117_am_t7b.png",
     21: "visuals_2026-11-24-am/slide_1117_am_t7c.png",
+    25: "visuals_2026-11-25-am/slide_1117_am_t10.png",
+    26: "visuals_2026-11-25-am/slide_1117_am_t11.png",
 }
 
 # 旧URL -> Q&Aページのアンカーへの転送（統合で消えたテーマのリンク切れ防止）
