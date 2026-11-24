@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="assets/style.css"></head><body>
 <div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><span class="topbar-title">Life is beautiful 学びの場</span><a class="topbar-home" href="index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in"><a href="index.html">トップ</a><a href="unread.html">未読リスト</a><a href="deliveries.html">配信ごと</a><a href="issues.html">号ごと</a><a href="genres.html">ジャンル</a><a href="glossary.html">用語集</a><a href="later.html">後で読む</a><a href="memo.html">メモ</a></div></nav></div><div class="wrap">
 <header class="site"><h1>メモ</h1>
-<p class="meta">各テーマページのメモ欄に書いた自由記載メモの一覧です。更新日時の新しい順に並んでいます。ここでも編集でき、入力すると自動で保存されます。この状態はこの端末の中にだけ保存されます。</p></header>
+<p class="meta">各テーマに書いたメモの一覧です。テーマごとに、そのテーマのメモをすべて表示しています（新しいメモがあるテーマ順）。ここでも各メモを編集でき、入力すると自動で保存されます。空にするとそのメモは削除されます。この状態はこの端末の中にだけ保存されます。</p></header>
 <div id="memoBox"><p class="meta">読み込み中…</p></div>
 <footer>週刊 Life is beautiful 学びの場</footer>
 <script src="assets/app.js"></script>
@@ -14,21 +14,32 @@ const INFO={"6": {"title": "SpaceX Starship本体キャッチ成功 — 宇宙�
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function render(){
   const m=getMemos();
-  const ids=Object.keys(m).map(Number).filter(function(id){return INFO[id]&&m[id]&&m[id].text}).sort(function(a,b){return String(m[b].updated_at||'').localeCompare(String(m[a].updated_at||''))});
+  const ids=Object.keys(m).map(Number).filter(function(id){return INFO[id]&&(m[id]||[]).length});
+  ids.sort(function(a,b){
+    const la=m[a][m[a].length-1],lb=m[b][m[b].length-1];
+    return String((lb&&lb.at)||'').localeCompare(String((la&&la.at)||''));
+  });
   const box=document.getElementById('memoBox');
-  if(!ids.length){box.innerHTML='<p class="meta">まだメモがありません。各記事ページのメモ欄から書けます。</p>';return;}
+  if(!ids.length){box.innerHTML='<p class="meta">まだメモがありません。各記事ページのメモボタンから書けます。改行すると別のメモとして記録されます。</p>';return;}
   box.innerHTML=ids.map(function(id){
     const t=INFO[id];
-    return '<div class="card memo-item"><a class="ttl" href="t/'+id+'.html">'+escHtml(t.title)+'</a><div class="meta">'+escHtml(t.issue)+(t.label?'｜'+escHtml(t.label):'')+'</div><textarea data-memo="'+id+'"></textarea><div class="memo-status"></div><div class="meta">更新：'+escHtml(fmtDate(m[id].updated_at))+'</div><button class="mini skipb memo-del" data-memo-del="'+id+'">メモを消す</button></div>';
+    const entries=m[id].map(function(mm,i){
+      return '<div class="memo-entry"><textarea data-memo-edit="'+id+'_'+i+'"></textarea><div class="memo-status"></div><div class="memo-row-meta"><span class="meta">'+escHtml(fmtDate(mm.at))+'</span><button class="mini skipb" data-memo-del="'+id+'_'+i+'">削除</button></div></div>';
+    }).join('');
+    return '<div class="card memo-item"><a class="ttl" href="t/'+id+'.html">'+escHtml(t.title)+'</a><div class="meta">'+escHtml(t.issue)+(t.label?'｜'+escHtml(t.label):'')+'</div>'+entries+'</div>';
   }).join('');
-  box.querySelectorAll('[data-memo]').forEach(function(ta){
-    const id=ta.dataset.memo;const mm=getMemos();
-    if(mm[id]&&mm[id].text)ta.value=mm[id].text;
-    const sec=ta.closest('.memo-item');const st=sec?sec.querySelector('.memo-status'):null;
-    ta.addEventListener('input',function(){saveMemo(id,ta.value);if(st)st.textContent=ta.value?'保存しました':'';});
+  box.querySelectorAll('[data-memo-edit]').forEach(function(ta){
+    const kv=ta.getAttribute('data-memo-edit').split('_');const id=kv[0],idx=+kv[1];
+    const cur=getMemos()[id]||[];if(cur[idx])ta.value=cur[idx].text;
+    const st=ta.parentElement.querySelector('.memo-status');
+    ta.addEventListener('input',function(){
+      if(ta.value.trim()){updateMemoText(id,idx,ta.value);if(st)st.textContent='保存しました';}
+      else if(st)st.textContent='空にすると削除されます';
+    });
+    ta.addEventListener('change',function(){if(!ta.value.trim()){deleteMemoAt(id,idx);render();}});
   });
   box.querySelectorAll('[data-memo-del]').forEach(function(b){
-    b.addEventListener('click',function(){saveMemo(b.dataset.memoDel,'');render();});
+    b.addEventListener('click',function(){const kv=b.getAttribute('data-memo-del').split('_');deleteMemoAt(kv[0],+kv[1]);render();});
   });
 }
 render();

@@ -33,9 +33,15 @@
 <h2>関連テーマ</h2><ul class="points"><li><a href="2.html">LLMデータベース — AIが文脈を読む、新しいデータベースの形</a> <span class="meta">（2026年6月2日号）</span></li></ul>
 <p><a href="https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43" target="_blank" rel="noopener">Notionで原文の記録を読む</a></p>
 <p class="note" style="text-align:center">2026年6月2日号の配信状況： 5/5</p>
-<div class="memo-sec"><h2>メモ</h2>
-<textarea data-memo="1" placeholder="気になったことや保存したいことを自由に書けます"></textarea>
-<div class="memo-status"></div></div>
+<button type="button" class="memo-fab" data-memo-open="1">メモ<span class="memo-fab-count" data-memo-count="1"></span></button>
+<div class="memo-panel" data-memo-panel="1" hidden>
+<div class="memo-panel-box">
+<div class="memo-panel-head"><strong>メモ</strong><button type="button" class="mini" data-memo-close>閉じる</button></div>
+<div data-memo-list></div>
+<textarea data-memo-input placeholder="メモを書く（改行すると別のメモとして記録されます）"></textarea>
+<button type="button" class="memo-add" data-memo-add>追加</button>
+</div>
+</div>
 <button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
 <p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
 <footer>週刊 Life is beautiful 学びの場</footer>

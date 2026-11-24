@@ -145,9 +145,15 @@
 <div class="note"><strong>補足：</strong>この号から、過去のメルマガを活用して中島氏の代わりに質問に答えるAIボットが公式LINEとして採用されたことが告知されている。</div>
 <p><a href="https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43" target="_blank" rel="noopener">Notionで原文の記録を読む</a></p>
 <p class="note" style="text-align:center">2026年6月2日号の配信状況： 5/5</p>
-<div class="memo-sec"><h2>メモ</h2>
-<textarea data-memo="5" placeholder="気になったことや保存したいことを自由に書けます"></textarea>
-<div class="memo-status"></div></div>
+<button type="button" class="memo-fab" data-memo-open="5">メモ<span class="memo-fab-count" data-memo-count="5"></span></button>
+<div class="memo-panel" data-memo-panel="5" hidden>
+<div class="memo-panel-box">
+<div class="memo-panel-head"><strong>メモ</strong><button type="button" class="mini" data-memo-close>閉じる</button></div>
+<div data-memo-list></div>
+<textarea data-memo-input placeholder="メモを書く（改行すると別のメモとして記録されます）"></textarea>
+<button type="button" class="memo-add" data-memo-add>追加</button>
+</div>
+</div>
 <button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
 <p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
 <div class="eval"><div class="eval-head"><span>AI評価</span><span class="eval-total">63<small> / 100点</small></span></div>

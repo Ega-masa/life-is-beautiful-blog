@@ -20,9 +20,13 @@ later.html / memo.html を生成する。
   話題性は題材の世間的な注目度をもとにした目安（個別のSNS調査はしていない）。
 - 「後で読む」「いらない」の選択とテーマごとの自由記載メモは端末側 localStorage
   で管理する（既読 lib_read_v1 とは別キー: 選択 lib_pref_v1、メモ lib_memo_v1）。
-  メモはテーマページのメモ欄で書き、memo.html（メモ一覧）でも編集・削除でき、
-  入力のたびに自動保存される。要点チェック機能は 2026-11-24 の主君の決定で
-  廃止した（旧キー lib_checks_v1 のデータは端末側に残るが、UI からは参照しない）。
+  メモは 2026-11-24 夜の主君の決定で、テーマページ常時表示の「メモ」ボタンから
+  開くパネルで書く形に改修した。保存形式は {テーマid: [{text, at}]} で複数件を
+  保持し、追加時は入力を改行で分割して1行を1件のメモとして記録する。旧形式
+  {テーマid: {text, updated_at}} のデータは読み込み時に1件のメモへ自動移行する。
+  memo.html（メモ一覧）でもテーマごとに全メモを編集・削除できる。
+  要点チェック機能は 2026-11-24 の主君の決定で廃止した（旧キー lib_checks_v1
+  のデータは端末側に残るが、UI からは参照しない）。
   「いらない」はトップの続き計算と未読リストから除外される。
 - テーマページの用語解説は、用語集へ誘導せず定義文をその場に全文表示する
   （定義が無い項目は、他テーマで定義済みの用語から補完する）。
@@ -175,11 +179,21 @@ button.mini.skipb.on{background:var(--sub);color:#fff}
 .eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:8px 0;font-size:14px}
 .eval-grid b{color:var(--accent)}
 .eval-comment{font-size:14px;margin:6px 0 0}
-.memo-sec{margin:22px 0 4px}
-.memo-sec textarea{width:100%;min-height:110px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;font-family:inherit;resize:vertical}
 .memo-item textarea{width:100%;min-height:90px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;font-family:inherit;resize:vertical;margin-top:8px}
 .memo-status{font-size:12.5px;color:var(--sub);margin-top:4px;min-height:1.4em}
-.memo-del{margin-top:2px}
+.memo-entry{border-top:1px solid var(--line);margin-top:10px;padding-top:4px}
+.memo-fab{position:fixed;right:14px;bottom:14px;z-index:95;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.memo-fab:active{opacity:.85}
+.memo-panel{position:fixed;inset:0;z-index:96;background:rgba(10,16,22,.45);display:flex;align-items:flex-end;justify-content:center}
+.memo-panel[hidden]{display:none}
+.memo-panel-box{background:var(--card);color:var(--ink);width:100%;max-width:760px;max-height:82vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
+.memo-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.memo-row{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0}
+.memo-row-text{white-space:pre-wrap;word-break:break-word}
+.memo-row-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.memo-panel-box textarea{width:100%;min-height:90px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;font-family:inherit;resize:vertical}
+.memo-add{width:100%;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
+.memo-add:active{opacity:.85}
 .qa-toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px 12px 36px;margin:12px 0}
 .qa-toc li{margin:7px 0}
 .qa-block{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px 12px;margin:14px 0}
@@ -203,9 +217,76 @@ function toggleIn(a,id){return a.includes(id)?a.filter(function(x){return x!==id
 function toggleLater(id){const p=getPref();p.later=toggleIn(p.later,id);setPref(p);refreshPrefUI()}
 function toggleSkip(id){const p=getPref();p.skip=toggleIn(p.skip,id);setPref(p);refreshPrefUI()}
 const MEMO_KEY='lib_memo_v1';
-function getMemos(){try{const m=JSON.parse(localStorage.getItem(MEMO_KEY));if(m&&typeof m==='object'&&!Array.isArray(m))return m;}catch(e){}return{}}
+function normalizeMemos(raw){
+  const out={};
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
+  Object.keys(raw).forEach(function(id){
+    const v=raw[id];
+    if(Array.isArray(v)){
+      const arr=v.filter(function(e){return e&&typeof e.text==='string'&&e.text}).map(function(e){return{text:e.text,at:e.at||''}});
+      if(arr.length)out[id]=arr;
+    }else if(v&&typeof v.text==='string'&&v.text){
+      out[id]=[{text:v.text,at:v.updated_at||''}];
+    }
+  });
+  return out;
+}
+function getMemos(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(MEMO_KEY));
+    const norm=normalizeMemos(raw);
+    if(JSON.stringify(raw||{})!==JSON.stringify(norm))setMemos(norm);
+    return norm;
+  }catch(e){return{}}
+}
 function setMemos(m){localStorage.setItem(MEMO_KEY,JSON.stringify(m))}
-function saveMemo(id,text){const m=getMemos();if(text){m[id]={text:text,updated_at:new Date().toISOString()}}else{delete m[id]}setMemos(m)}
+function splitMemoLines(text){
+  const LF=String.fromCharCode(10),CR=String.fromCharCode(13);
+  return String(text||'').split(CR).join(LF).split(LF).map(function(s){return s.trim()}).filter(function(s){return s.length>0});
+}
+function addMemos(id,text){
+  const lines=splitMemoLines(text);
+  if(!lines.length)return 0;
+  const m=getMemos();const arr=(m[id]||[]).slice();const now=new Date().toISOString();
+  lines.forEach(function(s){arr.push({text:s,at:now})});
+  m[id]=arr;setMemos(m);return lines.length;
+}
+function updateMemoText(id,idx,text){
+  const m=getMemos();const arr=(m[id]||[]).slice();
+  if(idx<0||idx>=arr.length)return;
+  if(String(text||'').trim()){arr[idx]={text:String(text),at:new Date().toISOString()};m[id]=arr;}
+  else{arr.splice(idx,1);if(arr.length)m[id]=arr;else delete m[id];}
+  setMemos(m);
+}
+function deleteMemoAt(id,idx){
+  const m=getMemos();const arr=(m[id]||[]).slice();
+  if(idx<0||idx>=arr.length)return;
+  arr.splice(idx,1);if(arr.length)m[id]=arr;else delete m[id];setMemos(m);
+}
+function refreshMemoCounts(){
+  const memos=getMemos();
+  document.querySelectorAll('[data-memo-count]').forEach(function(el){
+    const n=(memos[el.getAttribute('data-memo-count')]||[]).length;
+    el.textContent=n?('（'+n+'）'):'';
+  });
+}
+function renderMemoPanel(panel){
+  const id=panel.getAttribute('data-memo-panel');
+  const list=panel.querySelector('[data-memo-list]');
+  const arr=getMemos()[id]||[];
+  list.innerHTML='';
+  if(!arr.length){list.innerHTML='<p class="meta">まだメモがありません。</p>';return;}
+  arr.forEach(function(mm,i){
+    const row=document.createElement('div');row.className='memo-row';
+    const tx=document.createElement('div');tx.className='memo-row-text';tx.textContent=mm.text;
+    const meta=document.createElement('div');meta.className='memo-row-meta';
+    const dt=document.createElement('span');dt.className='meta';dt.textContent=fmtDate(mm.at);
+    const del=document.createElement('button');del.type='button';del.className='mini skipb';del.textContent='削除';
+    del.addEventListener('click',function(){deleteMemoAt(id,i);renderMemoPanel(panel);refreshMemoCounts();});
+    meta.appendChild(dt);meta.appendChild(del);
+    row.appendChild(tx);row.appendChild(meta);list.appendChild(row);
+  });
+}
 function fmtDate(iso){try{const d=new Date(iso);return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}catch(e){return''}}
 function refreshButtons(){
   const later=getLater(),skip=getSkip();
@@ -226,16 +307,22 @@ document.addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   const mb=document.getElementById('menuBtn'),mp=document.getElementById('menuPanel');
   if(mb&&mp){mb.addEventListener('click',function(){mp.hidden=!mp.hidden;});mp.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){mp.hidden=true;});});}
-  document.querySelectorAll('[data-memo]').forEach(function(ta){
-    const id=ta.dataset.memo;const m=getMemos();
-    if(m[id]&&m[id].text)ta.value=m[id].text;
-    const sec=ta.closest('.memo-sec,.memo-item');const st=sec?sec.querySelector('.memo-status'):null;
-    ta.addEventListener('input',function(){
-      saveMemo(id,ta.value);
-      if(st)st.textContent=ta.value?'保存しました':'';
-      if(window.onMemoChange)window.onMemoChange();
+  document.querySelectorAll('[data-memo-open]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const panel=document.querySelector('[data-memo-panel="'+btn.getAttribute('data-memo-open')+'"]');
+      if(panel){renderMemoPanel(panel);panel.hidden=false;}
     });
   });
+  document.querySelectorAll('[data-memo-panel]').forEach(function(panel){
+    const id=panel.getAttribute('data-memo-panel');
+    panel.querySelector('[data-memo-close]').addEventListener('click',function(){panel.hidden=true;});
+    panel.addEventListener('click',function(e){if(e.target===panel)panel.hidden=true;});
+    panel.querySelector('[data-memo-add]').addEventListener('click',function(){
+      const ta=panel.querySelector('[data-memo-input]');
+      if(addMemos(id,ta.value)>0){ta.value='';renderMemoPanel(panel);refreshMemoCounts();}
+    });
+  });
+  refreshMemoCounts();
   applyReadState();
   refreshPrefUI();
 });
@@ -313,6 +400,20 @@ def toggle_btns(t, big=False):
     cls = "rowbtns big" if big else "rowbtns"
     return (f'<span class="{cls}"><button class="mini" data-later-btn="{t["id"]}">後で読む</button>'
             f'<button class="mini skipb" data-skip-btn="{t["id"]}">いらない</button></span>')
+
+def memo_ui(tid):
+    """テーマページ常時表示の「メモ」ボタンと、開閉する入力パネルのマークアップ。
+    既存メモの一覧・日時・削除と、改行で複数件に分かれる追加フォームを持つ。
+    実際の保存・描画は assets/app.js 側（lib_memo_v1）が担う。"""
+    return f"""<button type="button" class="memo-fab" data-memo-open="{tid}">メモ<span class="memo-fab-count" data-memo-count="{tid}"></span></button>
+<div class="memo-panel" data-memo-panel="{tid}" hidden>
+<div class="memo-panel-box">
+<div class="memo-panel-head"><strong>メモ</strong><button type="button" class="mini" data-memo-close>閉じる</button></div>
+<div data-memo-list></div>
+<textarea data-memo-input placeholder="メモを書く（改行すると別のメモとして記録されます）"></textarea>
+<button type="button" class="memo-add" data-memo-add>追加</button>
+</div>
+</div>"""
 
 def theme_li(t, href):
     """一覧ページ共通のテーマ行（既読バッジ・評価・選択ボタン付き）"""
@@ -456,9 +557,7 @@ def theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_tot
     if total_units:
         done_units = sum(1 for s in issues.get(t["issue_date"], []) if s.get("delivered"))
         parts.append(f'<p class="note" style="text-align:center">{esc(issue_label(t["issue_date"]))}の配信状況： {done_units}/{total_units}</p>')
-    parts.append(f"""<div class="memo-sec"><h2>メモ</h2>
-<textarea data-memo="{tid}" placeholder="気になったことや保存したいことを自由に書けます"></textarea>
-<div class="memo-status"></div></div>""")
+    parts.append(memo_ui(tid))
     parts.append(f"""<button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
 <p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
 <footer>週刊 Life is beautiful 学びの場</footer>
@@ -523,9 +622,7 @@ def qa_theme_page(t, issues, reading_order, slide_of, global_defs, issue_totals)
     if total_units:
         done_units = sum(1 for s in issues.get(t["issue_date"], []) if s.get("delivered"))
         parts.append(f'<p class="note" style="text-align:center">{esc(issue_label(t["issue_date"]))}の配信状況： {done_units}/{total_units}</p>')
-    parts.append(f"""<div class="memo-sec"><h2>メモ</h2>
-<textarea data-memo="{tid}" placeholder="気になったことや保存したいことを自由に書けます"></textarea>
-<div class="memo-status"></div></div>""")
+    parts.append(memo_ui(tid))
     parts.append(f"""<button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
 <p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
 {eval_html(t)}
@@ -728,7 +825,7 @@ def memo_page(delivered):
     info = {t["id"]: {"title": t["title"] or "", "issue": issue_label(t["issue_date"]), "label": t.get("delivery_label") or ""} for t in delivered}
     parts = [head("メモ | Life is beautiful 学びの場", "")]
     parts.append("""<header class="site"><h1>メモ</h1>
-<p class="meta">各テーマページのメモ欄に書いた自由記載メモの一覧です。更新日時の新しい順に並んでいます。ここでも編集でき、入力すると自動で保存されます。この状態はこの端末の中にだけ保存されます。</p></header>
+<p class="meta">各テーマに書いたメモの一覧です。テーマごとに、そのテーマのメモをすべて表示しています（新しいメモがあるテーマ順）。ここでも各メモを編集でき、入力すると自動で保存されます。空にするとそのメモは削除されます。この状態はこの端末の中にだけ保存されます。</p></header>
 <div id="memoBox"><p class="meta">読み込み中…</p></div>""")
     script = """<footer>週刊 Life is beautiful 学びの場</footer>
 <script src="assets/app.js"></script>
@@ -737,21 +834,32 @@ const INFO=__INFO__;
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function render(){
   const m=getMemos();
-  const ids=Object.keys(m).map(Number).filter(function(id){return INFO[id]&&m[id]&&m[id].text}).sort(function(a,b){return String(m[b].updated_at||'').localeCompare(String(m[a].updated_at||''))});
+  const ids=Object.keys(m).map(Number).filter(function(id){return INFO[id]&&(m[id]||[]).length});
+  ids.sort(function(a,b){
+    const la=m[a][m[a].length-1],lb=m[b][m[b].length-1];
+    return String((lb&&lb.at)||'').localeCompare(String((la&&la.at)||''));
+  });
   const box=document.getElementById('memoBox');
-  if(!ids.length){box.innerHTML='<p class="meta">まだメモがありません。各記事ページのメモ欄から書けます。</p>';return;}
+  if(!ids.length){box.innerHTML='<p class="meta">まだメモがありません。各記事ページのメモボタンから書けます。改行すると別のメモとして記録されます。</p>';return;}
   box.innerHTML=ids.map(function(id){
     const t=INFO[id];
-    return '<div class="card memo-item"><a class="ttl" href="t/'+id+'.html">'+escHtml(t.title)+'</a><div class="meta">'+escHtml(t.issue)+(t.label?'｜'+escHtml(t.label):'')+'</div><textarea data-memo="'+id+'"></textarea><div class="memo-status"></div><div class="meta">更新：'+escHtml(fmtDate(m[id].updated_at))+'</div><button class="mini skipb memo-del" data-memo-del="'+id+'">メモを消す</button></div>';
+    const entries=m[id].map(function(mm,i){
+      return '<div class="memo-entry"><textarea data-memo-edit="'+id+'_'+i+'"></textarea><div class="memo-status"></div><div class="memo-row-meta"><span class="meta">'+escHtml(fmtDate(mm.at))+'</span><button class="mini skipb" data-memo-del="'+id+'_'+i+'">削除</button></div></div>';
+    }).join('');
+    return '<div class="card memo-item"><a class="ttl" href="t/'+id+'.html">'+escHtml(t.title)+'</a><div class="meta">'+escHtml(t.issue)+(t.label?'｜'+escHtml(t.label):'')+'</div>'+entries+'</div>';
   }).join('');
-  box.querySelectorAll('[data-memo]').forEach(function(ta){
-    const id=ta.dataset.memo;const mm=getMemos();
-    if(mm[id]&&mm[id].text)ta.value=mm[id].text;
-    const sec=ta.closest('.memo-item');const st=sec?sec.querySelector('.memo-status'):null;
-    ta.addEventListener('input',function(){saveMemo(id,ta.value);if(st)st.textContent=ta.value?'保存しました':'';});
+  box.querySelectorAll('[data-memo-edit]').forEach(function(ta){
+    const kv=ta.getAttribute('data-memo-edit').split('_');const id=kv[0],idx=+kv[1];
+    const cur=getMemos()[id]||[];if(cur[idx])ta.value=cur[idx].text;
+    const st=ta.parentElement.querySelector('.memo-status');
+    ta.addEventListener('input',function(){
+      if(ta.value.trim()){updateMemoText(id,idx,ta.value);if(st)st.textContent='保存しました';}
+      else if(st)st.textContent='空にすると削除されます';
+    });
+    ta.addEventListener('change',function(){if(!ta.value.trim()){deleteMemoAt(id,idx);render();}});
   });
   box.querySelectorAll('[data-memo-del]').forEach(function(b){
-    b.addEventListener('click',function(){saveMemo(b.dataset.memoDel,'');render();});
+    b.addEventListener('click',function(){const kv=b.getAttribute('data-memo-del').split('_');deleteMemoAt(kv[0],+kv[1]);render();});
   });
 }
 render();
