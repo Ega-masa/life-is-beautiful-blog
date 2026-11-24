@@ -82,6 +82,8 @@ SLIDES = {
     16: "visuals_2026-06-09-pm/slide2.png",
     18: "visuals_2026-06-09-pm/slide3.png",
     19: "visuals_2026-06-09-pm/slide4.png",
+    22: "visuals_2026-06-09-pm/slide5.png",
+    23: "visuals_2026-06-09-pm/slide6.png",
     6: "visuals_2026-11-21-pm/slide_theme1.png",
     7: "visuals_2026-11-21-pm/slide_theme2.png",
     8: "visuals_2026-11-21-pm/slide_theme3.png",
