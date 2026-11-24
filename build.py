@@ -66,7 +66,10 @@ GENRE_SLUG = dict(GENRES)
 #    ※ slide4.png は「小さなAIとメモリ革命＋質問コーナー」の合体スライドのため id5 には付けない
 #  - 6/9号 夕の回: visuals_2026-06-09-pm/slide{1,2,3,4}.png（生成スクリプトのタイトルで特定）
 #  - 11/17号 テーマ2・3: visuals_2026-11-21-pm/slide_theme{2,3}.png（make_slides_v3.py のタイトルで特定）
-#    ※ テーマ1（Starship）の単独スライドは存在しない
+#  - 11/17号 テーマ1（Starship）: visuals_2026-11-21-pm/slide_theme1.png
+#    ※ 当時単独スライドが無かったため、2026-11-24 の監査訂正で配信データから
+#      同体裁で新規作成したもの（make_slide_theme1.py）。候補だった
+#      slide_1117_pm.png はテーマ2・3の合体スライドなので id6 には付けない
 #  - 11/17号 テーマ4・5: visuals_2026-11-22-am/slide_1117_am_t{4,5}.png
 #  - 11/17号 テーマ6・記事グループA: visuals_2026-11-23-am/slide_1117_am_t6.png / _t7a.png
 #  - 11/17号 記事グループB・C: visuals_2026-11-24-am/slide_1117_am_t7b.png / _t7c.png
@@ -79,6 +82,7 @@ SLIDES = {
     16: "visuals_2026-06-09-pm/slide2.png",
     18: "visuals_2026-06-09-pm/slide3.png",
     19: "visuals_2026-06-09-pm/slide4.png",
+    6: "visuals_2026-11-21-pm/slide_theme1.png",
     7: "visuals_2026-11-21-pm/slide_theme2.png",
     8: "visuals_2026-11-21-pm/slide_theme3.png",
     9: "visuals_2026-11-22-am/slide_1117_am_t4.png",
