@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>メモ | Life is beautiful 学びの場</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><span class="topbar-title">Life is beautiful 学びの場</span><a class="topbar-home" href="index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in"><a href="index.html">トップ</a><a href="unread.html">未読リスト</a><a href="deliveries.html">配信ごと</a><a href="issues.html">号ごと</a><a href="genres.html">ジャンル</a><a href="glossary.html">用語集</a><a href="later.html">後で読む</a><a href="memo.html">メモ</a></div></nav></div><div class="wrap">
+<header class="site"><h1>メモ</h1>
+<p class="meta">各テーマページのメモ欄に書いた自由記載メモの一覧です。更新日時の新しい順に並んでいます。ここでも編集でき、入力すると自動で保存されます。この状態はこの端末の中にだけ保存されます。</p></header>
+<div id="memoBox"><p class="meta">読み込み中…</p></div>
+<footer>週刊 Life is beautiful 学びの場</footer>
+<script src="assets/app.js"></script>
+<script>
+const INFO={"6": {"title": "SpaceX Starship本体キャッチ成功 — 宇宙に浮かぶAIデータセンターへ", "issue": "2026年11月17日号", "label": "2026年11月21日 夕の配信分"}, "7": {"title": "ジェンセン・フアンCEOの辞任 — NVIDIAの行方", "issue": "2026年11月17日号", "label": "2026年11月21日 夕の配信分"}, "8": {"title": "なぜハワイの入国審査で若い女性が別室に連れて行かれるか", "issue": "2026年11月17日号", "label": "2026年11月21日 夕の配信分"}, "1": {"title": "Antigravity 2.0 — 速さのGoogle、全体把握のClaude Code", "issue": "2026年6月2日号", "label": "2026年11月21日 夕の配信分"}, "2": {"title": "LLMデータベース — AIが文脈を読む、新しいデータベースの形", "issue": "2026年6月2日号", "label": "2026年11月21日 夕の配信分"}, "3": {"title": "SpaceXの「上場祭り」 — ファンド経由で未上場株に乗る方法", "issue": "2026年6月2日号", "label": "2026年11月21日 夕の配信分"}, "4": {"title": "私の目に留まった記事 — AIは人間を強くし、仕事と組織を変えていく", "issue": "2026年6月2日号", "label": "2026年11月21日 夕の配信分"}, "5": {"title": "質問コーナー — 設計原則、常時接続AI、監視社会まで12問", "issue": "2026年6月2日号", "label": "2026年11月21日 夕の配信分"}, "9": {"title": "ムーアの法則とAIバブル — 3つの「相転移」", "issue": "2026年11月17日号", "label": "2026年11月22日 朝の配信分"}, "10": {"title": "AI研究の最前線 — エージェントの記憶と「夢」／量子コンピュータの予想をAIが証明", "issue": "2026年11月17日号", "label": "2026年11月22日 朝の配信分"}, "15": {"title": "Alphabet 21年ぶり大型増資の真相 — 自社株買いから設備投資へ", "issue": "2026年6月9日号", "label": "2026年11月22日 夕の配信分"}, "16": {"title": "「ネット負債」という考え方 — 帳簿に載らない借金まで見る財務分析", "issue": "2026年6月9日号", "label": "2026年11月22日 夕の配信分"}, "11": {"title": "AIで燃え尽きるエンジニアたち", "issue": "2026年11月17日号", "label": "2026年11月23日 朝の配信分"}, "17": {"title": "記事グループA：自動運転・ロボタクシー", "issue": "2026年11月17日号", "label": "2026年11月23日 朝の配信分"}, "18": {"title": "AIの誕生によって低下する人類の知能 — 学習の外部性と知識の枯渇", "issue": "2026年6月9日号", "label": "2026年11月23日 夕の配信分"}, "19": {"title": "私の目に留まった記事 — ニューロン更新、MAI-Thinking-1、Anthropic上場準備など8本", "issue": "2026年6月9日号", "label": "2026年11月23日 夕の配信分"}, "20": {"title": "記事グループB：AIモデルとオープン化", "issue": "2026年11月17日号", "label": "2026年11月24日 朝の配信分"}, "21": {"title": "記事グループC：AI産業の構造と競争", "issue": "2026年11月17日号", "label": "2026年11月24日 朝の配信分"}, "22": {"title": "質問：市民開発とガバナンス", "issue": "2026年6月9日号", "label": "2026年11月24日 夕の配信分"}, "23": {"title": "質問：バイブコーディングの袋小路", "issue": "2026年6月9日号", "label": "2026年11月24日 夕の配信分"}};
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function render(){
+  const m=getMemos();
+  const ids=Object.keys(m).map(Number).filter(function(id){return INFO[id]&&m[id]&&m[id].text}).sort(function(a,b){return String(m[b].updated_at||'').localeCompare(String(m[a].updated_at||''))});
+  const box=document.getElementById('memoBox');
+  if(!ids.length){box.innerHTML='<p class="meta">まだメモがありません。各記事ページのメモ欄から書けます。</p>';return;}
+  box.innerHTML=ids.map(function(id){
+    const t=INFO[id];
+    return '<div class="card memo-item"><a class="ttl" href="t/'+id+'.html">'+escHtml(t.title)+'</a><div class="meta">'+escHtml(t.issue)+(t.label?'｜'+escHtml(t.label):'')+'</div><textarea data-memo="'+id+'"></textarea><div class="memo-status"></div><div class="meta">更新：'+escHtml(fmtDate(m[id].updated_at))+'</div><button class="mini skipb memo-del" data-memo-del="'+id+'">メモを消す</button></div>';
+  }).join('');
+  box.querySelectorAll('[data-memo]').forEach(function(ta){
+    const id=ta.dataset.memo;const mm=getMemos();
+    if(mm[id]&&mm[id].text)ta.value=mm[id].text;
+    const sec=ta.closest('.memo-item');const st=sec?sec.querySelector('.memo-status'):null;
+    ta.addEventListener('input',function(){saveMemo(id,ta.value);if(st)st.textContent=ta.value?'保存しました':'';});
+  });
+  box.querySelectorAll('[data-memo-del]').forEach(function(b){
+    b.addEventListener('click',function(){saveMemo(b.dataset.memoDel,'');render();});
+  });
+}
+render();
+</script></div></body></html>

@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Antigravity 2.0 — 速さのGoogle、全体把握のClaude Code | Life is beautiful 学びの場</title>
 <link rel="stylesheet" href="../assets/style.css"></head><body>
-<div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><span class="topbar-title">Life is beautiful 学びの場</span><a class="topbar-home" href="../index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in"><a href="../index.html">トップ</a><a href="../unread.html">未読リスト</a><a href="../deliveries.html">配信ごと</a><a href="../issues.html">号ごと</a><a href="../genres.html">ジャンル</a><a href="../glossary.html">用語集</a><a href="../later.html">後で読む</a><a href="../checked.html">チェック済み要点</a></div></nav></div><div class="wrap">
+<div class="stickyhead"><div class="topbar-in"><button class="burger" id="menuBtn" aria-label="メニュー">☰</button><span class="topbar-title">Life is beautiful 学びの場</span><a class="topbar-home" href="../index.html">トップに戻る</a></div><nav class="menu" id="menuPanel" hidden><div class="menu-in"><a href="../index.html">トップ</a><a href="../unread.html">未読リスト</a><a href="../deliveries.html">配信ごと</a><a href="../issues.html">号ごと</a><a href="../genres.html">ジャンル</a><a href="../glossary.html">用語集</a><a href="../later.html">後で読む</a><a href="../memo.html">メモ</a></div></nav></div><div class="wrap">
 <header class="site">
 <div class="meta">2026年6月2日号｜テクノロジー / MulmoClaude開発｜ジャンル: テクノロジー・AI</div>
 <h1>Antigravity 2.0 — 速さのGoogle、全体把握のClaude Code</h1>
@@ -15,7 +15,7 @@
 <div class="eval-grid"><div>新規性 <b>20</b> / 25</div><div>面白さ <b>21</b> / 25</div><div>話題性 <b>16</b> / 25</div><div>関連度 <b>20</b> / 25</div></div>
 <p class="eval-comment">実体験ベースの開発ツール比較は自分の開発に直結。話題性は開発者界隈が中心</p>
 <p class="meta">話題性は、題材がSNSや世の中のニュースでどれだけ注目されるかを目安にした推定です（個別のSNS調査はしていません）。関連度は、主君のNotion「ビジネス」欄のまとめ傾向（企業ケース・事業アイデア・投資・思考法）との合致度です。</p></div>
-<h2>要点（気になったらチェック）</h2><div class="points"><label class="point"><input type="checkbox" data-check="1:0"><span>AntigravityはGoogleが実質的に買収したWindsurfのチームが作った開発環境。2.0でGemini CLIが廃止され一本化された</span></label><label class="point"><input type="checkbox" data-check="1:1"><span>レスポンスとコード生成が速く「開発効率が数倍になる」と感じた</span></label><label class="point"><input type="checkbox" data-check="1:2"><span>Proプラン（月額20ドル）は2時間も経たないうちにレートリミットに到達。試すためにUltra 20xプラン（月額200ドル）へ一時アップグレードした</span></label><label class="point"><input type="checkbox" data-check="1:3"><span>他のAIモデルからのフィードバックを直させる段階で何度もやり直しが発生し、シンプルな3機能の実装に3〜4日かかった</span></label><label class="point"><input type="checkbox" data-check="1:4"><span>結論：新たなコードを素早く作りたい時だけAntigravity、規模のある開発はClaude Code</span></label></div>
+<h2>要点</h2><ul class="points"><li>AntigravityはGoogleが実質的に買収したWindsurfのチームが作った開発環境。2.0でGemini CLIが廃止され一本化された</li><li>レスポンスとコード生成が速く「開発効率が数倍になる」と感じた</li><li>Proプラン（月額20ドル）は2時間も経たないうちにレートリミットに到達。試すためにUltra 20xプラン（月額200ドル）へ一時アップグレードした</li><li>他のAIモデルからのフィードバックを直させる段階で何度もやり直しが発生し、シンプルな3機能の実装に3〜4日かかった</li><li>結論：新たなコードを素早く作りたい時だけAntigravity、規模のある開発はClaude Code</li></ul>
 <h2>用語解説</h2><dl class="gloss"><dt>レートリミット</dt><dd>プランごとに決められた利用頻度の上限。これを超えるとしばらく使えなくなる</dd><dt>プルリクエスト</dt><dd>コードの変更をひとまとめにしてGitHubに提示し、レビューしてもらう仕組み</dd><dt>リポジトリ</dt><dd>一つのプロジェクト向けのコードの集まり全体のこと</dd><dt>デファクト・スタンダード</dt><dd>公式の規格ではないが、事実上の標準として広く使われているもの</dd></dl>
 <h2>まとめ直し</h2><p>速さのAntigravity、全体把握のClaude Code。生成スピードが速くても、規模と複雑さのあるプロジェクトでは「全体を見渡して良い仕事をする」方が優秀、という実体験に基づく道具の使い分け論。</p>
 <div class="note"><strong>補足：</strong>試した機能は個人経営者向けの仕事記録・顧客管理・請求書発行。次のテーマ「LLMデータベース」は、この3機能の実装方式を見直した話につながる。</div>
@@ -33,6 +33,9 @@
 <h2>関連テーマ</h2><ul class="points"><li><a href="2.html">LLMデータベース — AIが文脈を読む、新しいデータベースの形</a> <span class="meta">（2026年6月2日号）</span></li></ul>
 <p><a href="https://app.notion.com/p/e30d6f6583794ffb8512cca9777bba43" target="_blank" rel="noopener">Notionで原文の記録を読む</a></p>
 <p class="note" style="text-align:center">2026年6月2日号の配信状況： 5/5</p>
+<div class="memo-sec"><h2>メモ</h2>
+<textarea data-memo="1" placeholder="気になったことや保存したいことを自由に書けます"></textarea>
+<div class="memo-status"></div></div>
 <button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
 <p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
 <footer>週刊 Life is beautiful 学びの場</footer>

@@ -6,7 +6,7 @@ Life is beautiful 学びの場 — 静的サイト生成スクリプト
 data/themes.json（学習スペース getlibrary の出力が正本）から、
 index.html / unread.html / t/<theme_id>.html / glossary.html /
 deliveries.html / issues.html / genres.html / genre/<slug>.html /
-later.html / checked.html を生成する。
+later.html / memo.html を生成する。
 
 構成の方針:
 - 全ページ共通で上部に固定（sticky）ヘッダーを持ち、左のハンバーガーから
@@ -18,8 +18,11 @@ later.html / checked.html を生成する。
   AI評価（evaluation: 新規性・面白さ・話題性・関連度の4軸×25点=100点）を付け、
   一覧に合計点バッジ、テーマページに評価パネルを表示する。
   話題性は題材の世間的な注目度をもとにした目安（個別のSNS調査はしていない）。
-- 「後で読む」「いらない」の選択と要点チェックは端末側 localStorage で管理する
-  （既読 lib_read_v1 とは別キー: 選択 lib_pref_v1、要点 lib_checks_v1）。
+- 「後で読む」「いらない」の選択とテーマごとの自由記載メモは端末側 localStorage
+  で管理する（既読 lib_read_v1 とは別キー: 選択 lib_pref_v1、メモ lib_memo_v1）。
+  メモはテーマページのメモ欄で書き、memo.html（メモ一覧）でも編集・削除でき、
+  入力のたびに自動保存される。要点チェック機能は 2026-11-24 の主君の決定で
+  廃止した（旧キー lib_checks_v1 のデータは端末側に残るが、UI からは参照しない）。
   「いらない」はトップの続き計算と未読リストから除外される。
 - テーマページの用語解説は、用語集へ誘導せず定義文をその場に全文表示する
   （定義が無い項目は、他テーマで定義済みの用語から補完する）。
@@ -158,9 +161,11 @@ button.mini.skipb.on{background:var(--sub);color:#fff}
 .eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:8px 0;font-size:14px}
 .eval-grid b{color:var(--accent)}
 .eval-comment{font-size:14px;margin:6px 0 0}
-.points label.point{display:flex;gap:9px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin:7px 0;cursor:pointer}
-.points label.point input{margin-top:6px;width:17px;height:17px;flex:none;accent-color:var(--accent)}
-.points label.point input:checked+span{font-weight:700}
+.memo-sec{margin:22px 0 4px}
+.memo-sec textarea{width:100%;min-height:110px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;font-family:inherit;resize:vertical}
+.memo-item textarea{width:100%;min-height:90px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.7;font-family:inherit;resize:vertical;margin-top:8px}
+.memo-status{font-size:12.5px;color:var(--sub);margin-top:4px;min-height:1.4em}
+.memo-del{margin-top:2px}
 """
 
 JS = """
@@ -177,9 +182,11 @@ function getSkip(){return getPref().skip}
 function toggleIn(a,id){return a.includes(id)?a.filter(function(x){return x!==id}):a.concat([id])}
 function toggleLater(id){const p=getPref();p.later=toggleIn(p.later,id);setPref(p);refreshPrefUI()}
 function toggleSkip(id){const p=getPref();p.skip=toggleIn(p.skip,id);setPref(p);refreshPrefUI()}
-const CHECK_KEY='lib_checks_v1';
-function getChecks(){try{return JSON.parse(localStorage.getItem(CHECK_KEY))||{}}catch(e){return{}}}
-function setChecks(c){localStorage.setItem(CHECK_KEY,JSON.stringify(c))}
+const MEMO_KEY='lib_memo_v1';
+function getMemos(){try{const m=JSON.parse(localStorage.getItem(MEMO_KEY));if(m&&typeof m==='object'&&!Array.isArray(m))return m;}catch(e){}return{}}
+function setMemos(m){localStorage.setItem(MEMO_KEY,JSON.stringify(m))}
+function saveMemo(id,text){const m=getMemos();if(text){m[id]={text:text,updated_at:new Date().toISOString()}}else{delete m[id]}setMemos(m)}
+function fmtDate(iso){try{const d=new Date(iso);return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}catch(e){return''}}
 function refreshButtons(){
   const later=getLater(),skip=getSkip();
   document.querySelectorAll('[data-later-btn]').forEach(function(b){const on=later.includes(+b.dataset.laterBtn);b.classList.toggle('on',on);b.textContent=on?'後で読む ✓':'後で読む';});
@@ -199,10 +206,15 @@ document.addEventListener('click',function(e){
 document.addEventListener('DOMContentLoaded',function(){
   const mb=document.getElementById('menuBtn'),mp=document.getElementById('menuPanel');
   if(mb&&mp){mb.addEventListener('click',function(){mp.hidden=!mp.hidden;});mp.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){mp.hidden=true;});});}
-  document.querySelectorAll('[data-check]').forEach(function(cb){
-    const pr=cb.dataset.check.split(':');const tid=+pr[0],idx=+pr[1];const c=getChecks();
-    cb.checked=((c[tid]||[]).indexOf(idx)>=0);
-    cb.addEventListener('change',function(){const cc=getChecks();const s=new Set(cc[tid]||[]);if(cb.checked)s.add(idx);else s.delete(idx);cc[tid]=Array.from(s).sort(function(x,y){return x-y});setChecks(cc);});
+  document.querySelectorAll('[data-memo]').forEach(function(ta){
+    const id=ta.dataset.memo;const m=getMemos();
+    if(m[id]&&m[id].text)ta.value=m[id].text;
+    const sec=ta.closest('.memo-sec,.memo-item');const st=sec?sec.querySelector('.memo-status'):null;
+    ta.addEventListener('input',function(){
+      saveMemo(id,ta.value);
+      if(st)st.textContent=ta.value?'保存しました':'';
+      if(window.onMemoChange)window.onMemoChange();
+    });
   });
   applyReadState();
   refreshPrefUI();
@@ -217,7 +229,7 @@ MENU_ITEMS = [
     ("genres.html", "ジャンル"),
     ("glossary.html", "用語集"),
     ("later.html", "後で読む"),
-    ("checked.html", "チェック済み要点"),
+    ("memo.html", "メモ"),
 ]
 
 def esc(s):
@@ -350,8 +362,8 @@ def main():
     for name, slug in GENRES:
         (OUT_G / f"{slug}.html").write_text(genre_page(name, genre_themes.get(name, [])), encoding="utf-8")
     (BASE / "later.html").write_text(later_page(delivered, reading_order), encoding="utf-8")
-    (BASE / "checked.html").write_text(checked_page(delivered), encoding="utf-8")
-    print(f"built: index + unread + {len(themes)} theme pages + glossary + deliveries + issues + genres + {len(GENRES)} genre pages + later + checked; slides mapped: {sorted(slide_of)}")
+    (BASE / "memo.html").write_text(memo_page(delivered), encoding="utf-8")
+    print(f"built: index + unread + {len(themes)} theme pages + glossary + deliveries + issues + genres + {len(GENRES)} genre pages + later + memo; slides mapped: {sorted(slide_of)}")
 
 def theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_totals):
     tid = t["id"]
@@ -376,10 +388,8 @@ def theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_tot
     elif not t.get("delivered"):
         parts.append('<p class="meta">AI評価は配信時に付けます。</p>')
     if t.get("key_points"):
-        labels = "".join(
-            f'<label class="point"><input type="checkbox" data-check="{tid}:{i}"><span>{esc(k)}</span></label>'
-            for i, k in enumerate(t["key_points"]))
-        parts.append(f'<h2>要点（気になったらチェック）</h2><div class="points">{labels}</div>')
+        items = "".join(f'<li>{esc(k)}</li>' for k in t["key_points"])
+        parts.append(f'<h2>要点</h2><ul class="points">{items}</ul>')
     gloss = [g for g in (t.get("glossary") or []) if g.get("term")]
     if gloss:
         # 用語解説は定義文をその場に全文表示する（用語集ページへの参照で済ませない）。
@@ -415,6 +425,9 @@ def theme_page(t, by_id, issues, reading_order, slide_of, global_defs, issue_tot
     if total_units:
         done_units = sum(1 for s in issues.get(t["issue_date"], []) if s.get("delivered"))
         parts.append(f'<p class="note" style="text-align:center">{esc(issue_label(t["issue_date"]))}の配信状況： {done_units}/{total_units}</p>')
+    parts.append(f"""<div class="memo-sec"><h2>メモ</h2>
+<textarea data-memo="{tid}" placeholder="気になったことや保存したいことを自由に書けます"></textarea>
+<div class="memo-status"></div></div>""")
     parts.append(f"""<button class="next" id="nextBtn">読んだ ✓ 次の未読へ</button>
 <p class="meta" style="text-align:center"><a href="#" id="unreadLink">未読に戻す</a></p>
 <footer>週刊 Life is beautiful 学びの場</footer>
@@ -456,7 +469,7 @@ def index_page(delivered, reading_order):
 <a href="issues.html">号ごとに見る</a>
 <a href="genres.html">ジャンルで見る</a>
 <a href="later.html">後で読む</a>
-<a href="checked.html">チェック済み要点</a>
+<a href="memo.html">メモ</a>
 <a href="glossary.html">用語集</a>
 </div>""")
     script = """<footer>週刊 Life is beautiful 学びの場</footer>
@@ -598,31 +611,39 @@ render();
     parts.append(script.replace("__ORDER__", json.dumps(reading_order)).replace("__INFO__", json_for_script(info)))
     return "\n".join(parts)
 
-def checked_page(delivered):
-    points = {t["id"]: {"title": t["title"] or "", "points": t.get("key_points") or []} for t in delivered if t.get("key_points")}
-    parts = [head("チェック済み要点 | Life is beautiful 学びの場", "")]
-    parts.append("""<header class="site"><h1>チェック済み要点</h1>
-<p class="meta">各テーマページでチェックを付けた要点だけを、テーマごとにまとめています。この状態はこの端末の中にだけ保存されます。</p></header>
-<div id="checkedBox"><p class="meta">読み込み中…</p></div>""")
+def memo_page(delivered):
+    info = {t["id"]: {"title": t["title"] or "", "issue": issue_label(t["issue_date"]), "label": t.get("delivery_label") or ""} for t in delivered}
+    parts = [head("メモ | Life is beautiful 学びの場", "")]
+    parts.append("""<header class="site"><h1>メモ</h1>
+<p class="meta">各テーマページのメモ欄に書いた自由記載メモの一覧です。更新日時の新しい順に並んでいます。ここでも編集でき、入力すると自動で保存されます。この状態はこの端末の中にだけ保存されます。</p></header>
+<div id="memoBox"><p class="meta">読み込み中…</p></div>""")
     script = """<footer>週刊 Life is beautiful 学びの場</footer>
 <script src="assets/app.js"></script>
 <script>
-const POINTS=__POINTS__;
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+const INFO=__INFO__;
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function render(){
-  const c=getChecks();
-  const ids=Object.keys(c).map(Number).filter(function(id){return POINTS[id]&&(c[id]||[]).length}).sort(function(a,b){return a-b});
-  const box=document.getElementById('checkedBox');
-  if(!ids.length){box.innerHTML='<p class="meta">まだチェックした要点がありません。各テーマページの「要点」で気になったものにチェックを付けると、ここに集まります。</p>';return;}
+  const m=getMemos();
+  const ids=Object.keys(m).map(Number).filter(function(id){return INFO[id]&&m[id]&&m[id].text}).sort(function(a,b){return String(m[b].updated_at||'').localeCompare(String(m[a].updated_at||''))});
+  const box=document.getElementById('memoBox');
+  if(!ids.length){box.innerHTML='<p class="meta">まだメモがありません。各記事ページのメモ欄から書けます。</p>';return;}
   box.innerHTML=ids.map(function(id){
-    const m=POINTS[id];
-    const lis=c[id].slice().sort(function(a,b){return a-b}).map(function(i){return '<li>'+escHtml(m.points[i]||'')+'</li>'}).join('');
-    return '<div class="card"><a class="ttl" href="t/'+id+'.html">'+escHtml(m.title)+'</a><ul class="points">'+lis+'</ul></div>';
+    const t=INFO[id];
+    return '<div class="card memo-item"><a class="ttl" href="t/'+id+'.html">'+escHtml(t.title)+'</a><div class="meta">'+escHtml(t.issue)+(t.label?'｜'+escHtml(t.label):'')+'</div><textarea data-memo="'+id+'"></textarea><div class="memo-status"></div><div class="meta">更新：'+escHtml(fmtDate(m[id].updated_at))+'</div><button class="mini skipb memo-del" data-memo-del="'+id+'">メモを消す</button></div>';
   }).join('');
+  box.querySelectorAll('[data-memo]').forEach(function(ta){
+    const id=ta.dataset.memo;const mm=getMemos();
+    if(mm[id]&&mm[id].text)ta.value=mm[id].text;
+    const sec=ta.closest('.memo-item');const st=sec?sec.querySelector('.memo-status'):null;
+    ta.addEventListener('input',function(){saveMemo(id,ta.value);if(st)st.textContent=ta.value?'保存しました':'';});
+  });
+  box.querySelectorAll('[data-memo-del]').forEach(function(b){
+    b.addEventListener('click',function(){saveMemo(b.dataset.memoDel,'');render();});
+  });
 }
 render();
 </script></div></body></html>"""
-    parts.append(script.replace("__POINTS__", json_for_script(points)))
+    parts.append(script.replace("__INFO__", json_for_script(info)))
     return "\n".join(parts)
 
 def glossary_page(themes):
