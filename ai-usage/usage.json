@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-11-24T21:24:34+09:00",
+  "updated_at": "2026-11-26T07:38:14+09:00",
   "muse": {
     "status": "ok",
     "weekly_used_pct": 100.0,
     "weekly_remaining_pct": 0.0,
     "reset_at_text": "Nov 27 at 12:35 PM JST",
-    "additional_used_pct": 1.0,
+    "additional_used_pct": 2.0,
     "additional_left_text": "3.9B",
     "note": "Muse は割合と概数（例: 3.9B）しか提供しないため、正確な残トークン数は出せません"
   },
@@ -15,21 +15,21 @@
     "total_jpy": 573,
     "week_usd": 3.6,
     "total_usd": 3.6,
-    "est_balance_jpy": 16122,
+    "est_balance_jpy": 16140,
     "est_balance_note": "推定値: 基準 $101.36（2026-11-24T20:04+09:00 時点） - 基準以降の使用 $0.00。Anthropic には残高APIがないため公式値ではありません",
     "source": "spend_cache.json",
     "note": "使用額は ローカル集計キャッシュ ベース。残高は推定のみ（公式の残高APIなし）"
   },
   "xai": {
     "status": "ok",
-    "balance_jpy": 6216,
-    "balance_usd": 39.08,
-    "week_jpy": 307,
-    "week_usd": 1.932736,
+    "balance_jpy": 5710,
+    "balance_usd": 35.86,
+    "week_jpy": 808,
+    "week_usd": 5.07611,
     "note": "Management API の実残高（台帳ベース。当期使用額の反映が遅れる場合あり）"
   },
   "fx": {
-    "usd_jpy": 159.06171,
+    "usd_jpy": 159.238818,
     "source": "open.er-api.com"
   }
 }
