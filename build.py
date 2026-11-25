@@ -104,6 +104,31 @@ GENRE_SLUG = dict(GENRES)
 # ジャンル名 -> 定義順の番号（一覧のジャンル順ソートで使う）
 GENRE_INDEX = {name: i for i, (name, slug) in enumerate(GENRES)}
 
+# 過去号アーカイブ（2026-11-25 一括取り込み、1,782件）の配信ラベル。
+# 件数が多いため、トップと未読リストには載せず（続きを読む導線は ORDER で
+# 保持される）、号ごと・すべての記事・ジャンルから辿る形にする。
+# 配信ごとのページでは行を並べず、号ごとページへのリンクカードにする。
+# 一覧ページは年別に分割する（1ページに全件を並べるとファイルサイズが
+# GitHub コネクタの push 上限を超えるため）。
+ARCHIVE_LABEL = "過去号アーカイブ（2026年11月25日取り込み）"
+
+def is_archive(t):
+    return t.get("delivery_label") == ARCHIVE_LABEL
+
+def year_nav(kind, years, current):
+    """年別一覧ページ間のナビ。kind は 'all' または 'issues'。
+    最新年は <kind>.html、それ以外は <kind>-<年>.html。"""
+    latest = years[-1]
+    links = []
+    for y in years:
+        href = f"{kind}.html" if y == latest else f"{kind}-{y}.html"
+        label = f"{y}年"
+        if y == current:
+            links.append(f"<strong>{label}</strong>")
+        else:
+            links.append(f'<a href="{href}">{label}</a>')
+    return '<p class="meta">年別: ' + " ｜ ".join(links) + "</p>"
+
 # テーマID -> スライド画像（hidden_files からの相対パス）
 # 対応は生成スクリプトとファイル名から特定したものだけを載せる。
 #  - 6/2号 SDS版（1テーマ1枚）: visuals_2026-11-21-sds/slide_0602_t{1,2,3}.png
@@ -749,9 +774,11 @@ def main():
         (OUT_T / f"{old_id}.html").write_text(redirect_page(old_id, target), encoding="utf-8")
     (BASE / "index.html").write_text(index_page(delivered, reading_order), encoding="utf-8")
     (BASE / "unread.html").write_text(unread_page(delivered, reading_order), encoding="utf-8")
-    (BASE / "all.html").write_text(all_page(themes, issues), encoding="utf-8")
+    for fname, text in all_page(themes, issues).items():
+        (BASE / fname).write_text(text, encoding="utf-8")
     (BASE / "deliveries.html").write_text(deliveries_page(delivered), encoding="utf-8")
-    (BASE / "issues.html").write_text(issues_page(issues), encoding="utf-8")
+    for fname, text in issues_page(issues).items():
+        (BASE / fname).write_text(text, encoding="utf-8")
     (BASE / "glossary.html").write_text(glossary_page(themes), encoding="utf-8")
     (BASE / "genres.html").write_text(genres_page(genre_themes), encoding="utf-8")
     OUT_G.mkdir(parents=True, exist_ok=True)
@@ -941,8 +968,13 @@ def index_page(delivered, reading_order):
 """ + sort_bar() + """
 <ul class="list sortable" id="unreadList">""")
     for t in delivered:
+        if is_archive(t):
+            continue
         parts.append(theme_li(t, f't/{t["id"]}.html'))
     parts.append('</ul>')
+    n_arch = sum(1 for t in delivered if is_archive(t))
+    if n_arch:
+        parts.append(f'<p class="meta">過去号アーカイブ（{n_arch}件）はこのリストには載せていません。<a href="issues.html">号ごとに見る</a>・<a href="all.html">すべての記事</a>から読めます。</p>')
     parts.append("""<div class="navrow">
 <a href="unread.html">未読リスト</a>
 <a href="all.html">すべての記事</a>
@@ -986,9 +1018,13 @@ def unread_page(delivered, reading_order):
 <p class="meta" id="unreadCount"></p></header>
 """ + sort_bar() + """
 <ul class="list sortable" id="unreadList">""")
-    for t in delivered:
+    listed = [t for t in delivered if not is_archive(t)]
+    for t in listed:
         parts.append(theme_li(t, f't/{t["id"]}.html'))
     parts.append('</ul>')
+    n_arch = len(delivered) - len(listed)
+    if n_arch:
+        parts.append(f'<p class="meta">過去号アーカイブ（{n_arch}件）はこのリストには載せていません。<a href="issues.html">号ごとに見る</a>・<a href="all.html">すべての記事</a>から読めます。</p>')
     script = """<footer>週刊 Life is beautiful 学びの場</footer>
 <script src="assets/app.js"></script>
 <script>
@@ -1001,27 +1037,34 @@ function render(){
     el.style.display=skip.includes(id)?'none':'';
     if(!read.includes(id)&&!skip.includes(id))unread++;
   });
-  document.getElementById('unreadCount').textContent='未読 '+unread+' 件 / 配信済み '+ORDER.length+' 件';
+  document.getElementById('unreadCount').textContent='未読 '+unread+' 件 / 配信済み '+__LISTED__+' 件（過去号アーカイブを除く）';
 }
 window.onPrefChange=render;
 render();
 </script></div></body></html>"""
-    parts.append(script.replace("__ORDER__", json.dumps(reading_order)))
+    parts.append(script.replace("__ORDER__", json.dumps(reading_order)).replace("__LISTED__", str(len(listed))))
     return "\n".join(parts)
 
 def all_page(themes, issues):
     """すべての記事: 登録テーマ全部（配信済み・未配信とも）を号の日付順・号内順に
-    並べた単一の一覧。並べ替えバー（既存の共通仕組み）に加えて、状態・ジャンル・
-    号・題名キーワードのフィルター（AND 条件）を付ける。状態は端末の
-    localStorage から読み取り時に判定し、選択は lib_filter_v1 に保存する。"""
+    並べた一覧。年別に分割し {ファイル名: HTML} を返す（最新年が all.html、
+    他の年は all-<年>.html）。並べ替えバー（既存の共通仕組み）に加えて、
+    状態・ジャンル・号・題名キーワードのフィルター（AND 条件）を付ける。
+    フィルターは年ページの中で効く。状態は端末の localStorage から
+    読み取り時に判定し、選択は lib_filter_v1 に保存する。"""
     present_genres = [(name, slug) for name, slug in GENRES
                       if any(t.get("genre") == name for t in themes)]
-    present_issues = sorted(issues)
     genre_opts = "".join(f'<option value="{esc(name)}">{esc(name)}</option>' for name, _ in present_genres)
-    issue_opts = "".join(f'<option value="{esc(d)}">{esc(issue_label(d))}</option>' for d in present_issues)
-    parts = [head("すべての記事 | Life is beautiful 学びの場", "")]
-    parts.append("""<header class="site"><h1>すべての記事</h1>
+    years = sorted({d[:4] for d in issues})
+    latest = years[-1]
+    pages = {}
+    for y in years:
+        dates = sorted(d for d in issues if d[:4] == y)
+        issue_opts = "".join(f'<option value="{esc(d)}">{esc(issue_label(d))}</option>' for d in dates)
+        parts = [head(f"すべての記事（{y}年） | Life is beautiful 学びの場", "")]
+        parts.append(f"""<header class="site"><h1>すべての記事（{y}年）</h1>
 <p class="meta">登録されているテーマをすべて並べています（号の日付順）。フィルターと並べ替えは組み合わせて使えます。状態（既読・後で読む・いらない）はこの端末に保存された状態で判定します。</p></header>
+""" + year_nav("all", years, y) + """
 <div class="filterbar">
 <label>状態 <select data-filter-status>
 <option value="all">すべて</option>
@@ -1044,76 +1087,100 @@ def all_page(themes, issues):
 <p class="meta" id="filterCount"></p>
 """ + sort_bar() + """
 <ul class="list sortable" id="allList">""")
-    for date in present_issues:
-        for t in issues[date]:
-            parts.append(all_theme_li(t, f't/{t["id"]}.html'))
-    parts.append('</ul>')
-    parts.append("""<footer>週刊 Life is beautiful 学びの場</footer>
-<script src="assets/app.js"></script>
-<script>
-function readRowVals(el){
-  const ttl=el.querySelector('.ttl');
-  return {tid:+el.dataset.tid,title:ttl?ttl.textContent:'',genre:el.getAttribute('data-genre-name')||'',issue:el.getAttribute('data-issue')||''};
-}
-function applyFilter(){
-  const f=getFilterPref();
-  const ctx={read:getRead(),later:getLater(),skip:getSkip()};
-  let shown=0,total=0;
-  document.querySelectorAll('#allList [data-tid]').forEach(function(el){
-    total++;
-    const ok=rowMatchesFilter(readRowVals(el),f,ctx);
-    el.style.display=ok?'':'none';
-    if(ok)shown++;
-  });
-  document.getElementById('filterCount').textContent='全'+total+'件中 '+shown+'件を表示';
-  const st=document.querySelector('[data-filter-status]');if(st)st.value=f.status;
-  const ge=document.querySelector('[data-filter-genre]');if(ge){ge.value=f.genre;if(ge.value!==f.genre){ge.value='all';}}
-  const is=document.querySelector('[data-filter-issue]');if(is){is.value=f.issue;if(is.value!==f.issue){is.value='all';}}
-  const kw=document.querySelector('[data-filter-keyword]');if(kw&&kw.value!==f.keyword)kw.value=f.keyword;
-}
-function bindFilter(sel,field){
-  const el=document.querySelector(sel);if(!el)return;
-  el.addEventListener('input',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
-  el.addEventListener('change',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
-}
-bindFilter('[data-filter-status]','status');
-bindFilter('[data-filter-genre]','genre');
-bindFilter('[data-filter-issue]','issue');
-bindFilter('[data-filter-keyword]','keyword');
-const rst=document.querySelector('[data-filter-reset]');
-if(rst)rst.addEventListener('click',function(){setFilterPref({status:'all',genre:'all',issue:'all',keyword:''});applyFilter();});
-window.onPrefChange=applyFilter;
-applyFilter();
-</script></div></body></html>""")
-    return "\n".join(parts)
+        for date in dates:
+            for t in issues[date]:
+                parts.append(all_theme_li(t, f't/{t["id"]}.html'))
+        parts.append('</ul>')
+        parts.append("""<footer>週刊 Life is beautiful 学びの場</footer>
+    <script src="assets/app.js"></script>
+    <script>
+    function readRowVals(el){
+      const ttl=el.querySelector('.ttl');
+      return {tid:+el.dataset.tid,title:ttl?ttl.textContent:'',genre:el.getAttribute('data-genre-name')||'',issue:el.getAttribute('data-issue')||''};
+    }
+    function applyFilter(){
+      const f=getFilterPref();
+      const ctx={read:getRead(),later:getLater(),skip:getSkip()};
+      let shown=0,total=0;
+      document.querySelectorAll('#allList [data-tid]').forEach(function(el){
+        total++;
+        const ok=rowMatchesFilter(readRowVals(el),f,ctx);
+        el.style.display=ok?'':'none';
+        if(ok)shown++;
+      });
+      document.getElementById('filterCount').textContent='全'+total+'件中 '+shown+'件を表示';
+      const st=document.querySelector('[data-filter-status]');if(st)st.value=f.status;
+      const ge=document.querySelector('[data-filter-genre]');if(ge){ge.value=f.genre;if(ge.value!==f.genre){ge.value='all';}}
+      const is=document.querySelector('[data-filter-issue]');if(is){is.value=f.issue;if(is.value!==f.issue){is.value='all';}}
+      const kw=document.querySelector('[data-filter-keyword]');if(kw&&kw.value!==f.keyword)kw.value=f.keyword;
+    }
+    function bindFilter(sel,field){
+      const el=document.querySelector(sel);if(!el)return;
+      el.addEventListener('input',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
+      el.addEventListener('change',function(){const f=getFilterPref();f[field]=el.value;setFilterPref(f);applyFilter();});
+    }
+    bindFilter('[data-filter-status]','status');
+    bindFilter('[data-filter-genre]','genre');
+    bindFilter('[data-filter-issue]','issue');
+    bindFilter('[data-filter-keyword]','keyword');
+    const rst=document.querySelector('[data-filter-reset]');
+    if(rst)rst.addEventListener('click',function(){setFilterPref({status:'all',genre:'all',issue:'all',keyword:''});applyFilter();});
+    window.onPrefChange=applyFilter;
+    applyFilter();
+    </script></div></body></html>""")
+        fname = "all.html" if y == latest else f"all-{y}.html"
+        pages[fname] = "\n".join(parts)
+    return pages
+
 
 def deliveries_page(delivered):
     # 配信ごとの一覧（配信ラベル単位、古い順）。delivered は配信順に整列済み。
+    # 過去号アーカイブのグループは件数が多いため、行を並べず、号ごとページへの
+    # リンクカードにする。
     groups = {}
     for t in delivered:
         groups.setdefault(t.get("delivery_label") or "配信日時は未記録", []).append(t)
+    years = sorted({t["issue_date"][:4] for t in delivered})
+    latest = years[-1] if years else None
     parts = [head("配信ごとに見る | Life is beautiful 学びの場", "")]
     parts.append("""<header class="site"><h1>配信ごとに見る</h1>
 <p class="meta">配信1回分ずつ、その回に届いたテーマを古い順に並べています。</p></header>""")
     parts.append(sort_bar("並べ替えは各配信グループの中で効きます"))
     for label, ts in groups.items():
+        if label == ARCHIVE_LABEL:
+            links = []
+            for y in sorted({t["issue_date"][:4] for t in ts}):
+                href = "issues.html" if y == latest else f"issues-{y}.html"
+                links.append(f'<a href="{href}">{esc(y)}年の号</a>')
+            parts.append(f'<div class="card"><div class="ttl">{esc(label)}</div><p class="meta">過去号 {len(ts)} 件を一括で取り込みました。号ごとの一覧から読めます: ' + " ｜ ".join(links) + '</p></div>')
+            continue
         lis = "".join(theme_li(t, f't/{t["id"]}.html') for t in ts)
         parts.append(f'<div class="card"><div class="ttl">{esc(label)}</div><ul class="list sortable">{lis}</ul></div>')
     parts.append('<footer>週刊 Life is beautiful 学びの場</footer><script src="assets/app.js"></script></div></body></html>')
     return "\n".join(parts)
 
+
 def issues_page(issues):
-    # 号ごとの一覧（号の日付順、号内はテーマ順）。
-    parts = [head("号ごとに見る | Life is beautiful 学びの場", "")]
-    parts.append("""<header class="site"><h1>号ごとに見る</h1>
+    # 号ごとの一覧（号の日付順、号内はテーマ順）。年別に分割し
+    # {ファイル名: HTML} を返す（最新年が issues.html、他の年は issues-<年>.html）。
+    years = sorted({d[:4] for d in issues})
+    latest = years[-1]
+    pages = {}
+    for y in years:
+        parts = [head(f"号ごとに見る（{y}年） | Life is beautiful 学びの場", "")]
+        parts.append(f"""<header class="site"><h1>号ごとに見る（{y}年）</h1>
 <p class="meta">号ごとに、その号のテーマを並べています。</p></header>""")
-    parts.append(sort_bar("並べ替えは各号の中で効きます"))
-    for date in sorted(issues):
-        ts = issues[date]
-        lis = "".join(theme_li(t, f't/{t["id"]}.html') for t in ts)
-        parts.append(f'<div class="card"><div class="ttl">{esc(issue_label(date))}</div><ul class="list sortable">{lis}</ul></div>')
-    parts.append('<footer>週刊 Life is beautiful 学びの場</footer><script src="assets/app.js"></script></div></body></html>')
-    return "\n".join(parts)
+        parts.append(year_nav("issues", years, y))
+        parts.append(sort_bar("並べ替えは各号の中で効きます"))
+        for date in sorted(d for d in issues if d[:4] == y):
+            ts = issues[date]
+            lis = "".join(theme_li(t, f't/{t["id"]}.html') for t in ts)
+            parts.append(f'<div class="card"><div class="ttl">{esc(issue_label(date))}</div><ul class="list sortable">{lis}</ul></div>')
+        parts.append('<footer>週刊 Life is beautiful 学びの場</footer><script src="assets/app.js"></script></div></body></html>')
+        fname = "issues.html" if y == latest else f"issues-{y}.html"
+        pages[fname] = "\n".join(parts)
+    return pages
+
 
 def genres_page(genre_themes):
     parts = [head("ジャンル | Life is beautiful 学びの場", "")]
