@@ -170,6 +170,8 @@ SLIDES = {
     1810: "visuals_2026-06-16-pm/slide_0616_pm_t2.png",
     1811: "visuals_2026-11-26-am/slide_1117_am_t12.png",
     1812: "visuals_2026-11-26-am/slide_1117_am_t13.png",
+    1815: "visuals_2026-11-27-am/slide_1117_am_t14.png",
+    1816: "visuals_2026-11-27-am/slide_1117_am_t15.png",
     1813: "visuals_2026-06-16-pm/slide_0616_pm_t3.png",
     1814: "visuals_2026-06-16-pm/slide_0616_pm_t4.png",
 }
